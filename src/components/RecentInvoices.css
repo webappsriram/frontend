@@ -1,0 +1,161 @@
+.invoices-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.invoices-table {
+  overflow-x: auto;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1.5fr 1fr 1fr;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 12px;
+}
+
+.table-header .table-cell {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1.5fr 1fr 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-cell {
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.success {
+  background: #E6F7E6;
+  color: #10B981;
+}
+
+.status-badge.error {
+  background: #FFE6E6;
+  color: #EF4444;
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) {
+  .invoices-card {
+    padding: 20px;
+  }
+
+  .table-header,
+  .table-row {
+    gap: 12px;
+  }
+
+  .table-cell {
+    font-size: 13px;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .invoices-card {
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .table-header .table-cell {
+    display: none;
+  }
+  
+  .table-row {
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border-bottom: none;
+    margin-bottom: 8px;
+  }
+
+  .table-cell {
+    font-size: 13px;
+    padding: 4px 0;
+  }
+
+  .table-cell::before {
+    content: attr(data-label);
+    font-weight: 600;
+    margin-right: 8px;
+    color: #666;
+    display: inline-block;
+    min-width: 100px;
+  }
+
+  .status-badge {
+    display: inline-block;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .invoices-card {
+    padding: 12px;
+  }
+
+  .card-title {
+    font-size: 15px;
+  }
+
+  .table-cell {
+    font-size: 12px;
+  }
+
+  .table-cell::before {
+    min-width: 80px;
+    font-size: 11px;
+  }
+
+  .status-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+}
+

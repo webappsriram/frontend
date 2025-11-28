@@ -1,0 +1,114 @@
+.templates-card {
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.templates-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.templates-content {
+  margin-top: 32px;
+}
+
+.templates-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.templates-description {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.templates-button {
+  background: white;
+  color: #4A90E2;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.templates-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.templates-button:active {
+  transform: translateY(0);
+}
+
+/* Tablet and mobile styles */
+@media (max-width: 768px) {
+  .templates-card {
+    padding: 20px;
+  }
+
+  .templates-title {
+    font-size: 18px;
+  }
+
+  .templates-description {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .templates-button {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .templates-card {
+    padding: 16px;
+  }
+
+  .templates-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+
+  .templates-content {
+    margin-top: 24px;
+  }
+
+  .templates-title {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .templates-description {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  .templates-button {
+    width: 100%;
+    padding: 12px 20px;
+  }
+}
+
