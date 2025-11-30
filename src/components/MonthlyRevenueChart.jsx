@@ -1,5 +1,5 @@
 import React from 'react';
-import './MonthlyRevenueChart.css';
+
 
 const MonthlyRevenueChart = () => {
   const months = ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
@@ -9,30 +9,37 @@ const MonthlyRevenueChart = () => {
   const highlightedIndex = months.indexOf(highlightedMonth);
 
   return (
-    <div className="chart-card">
-      <div className="chart-header">
-        <div>
-          <div className="chart-title">Monthly Revenue</div>
-          <div className="chart-value">$15,000</div>
-        </div>
+    <div className="bg-white rounded-xl p-5 shadow-sm">
+      <div className="mb-6">
+        <div className="text-sm text-gray-600 mb-1">Monthly Revenue</div>
+        <div className="text-2xl font-bold text-gray-800">$15,000</div>
       </div>
-      <div className="chart-container">
-        <div className="chart-bars">
+      <div className="h-64">
+        <div className="h-full flex items-end justify-between gap-2">
           {months.map((month, index) => {
             const height = (values[index] / maxValue) * 100;
             const isHighlighted = index === highlightedIndex;
             return (
-              <div key={month} className="chart-bar-wrapper">
-                <div
-                  className={`chart-bar ${isHighlighted ? 'highlighted' : ''}`}
-                  style={{ height: `${height}%` }}
-                  title={`${month}: $${values[index].toLocaleString()}`}
-                >
-                  {isHighlighted && (
-                    <div className="chart-tooltip">$15,000</div>
-                  )}
+              <div key={month} className="flex-1 flex flex-col items-center h-full">
+                <div className="relative w-full h-full flex items-end justify-center">
+                  <div
+                    className={`w-full rounded-t transition-all cursor-pointer relative group ${
+                      isHighlighted 
+                        ? 'bg-[#4A90E2]' 
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    style={{ height: `${height}%` }}
+                    title={`${month}: $${values[index].toLocaleString()}`}
+                  >
+                    {isHighlighted && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                        $15,000
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="chart-label">{month}</div>
+                <div className="text-xs text-gray-600 mt-2">{month}</div>
               </div>
             );
           })}

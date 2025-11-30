@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import { getAuthToken } from '../utils/auth';
 import { API_ENDPOINTS } from '../config/api';
-import './CustomerDetails.css';
+
 
 const CustomerDetails = () => {
   const { id } = useParams();
@@ -89,30 +89,35 @@ const CustomerDetails = () => {
   }
 
   return (
-    <div className="customer-details-page">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar 
         isOpen={sidebarOpen} 
         onClose={closeSidebar}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
       />
-      <div className={`customer-details-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+      }`}>
         <Header onMenuClick={toggleSidebar} />
-        <div className="customer-details-content">
+        <div className="p-4 md:p-5 bg-gray-100 min-h-[calc(100vh-64px)] relative">
           {/* Breadcrumbs */}
-          <div className="breadcrumbs">
-            <span className="breadcrumb-item" onClick={() => navigate('/customers')}>Customers</span>
-            <span className="breadcrumb-separator">›</span>
-            <span className="breadcrumb-item active">{customer.name}</span>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            <span className="hover:text-gray-800 cursor-pointer" onClick={() => navigate('/customers')}>Customers</span>
+            <span className="text-gray-400">›</span>
+            <span className="text-gray-800 font-semibold">{customer.name}</span>
           </div>
 
           {/* Customer Info Header */}
-          <div className="customer-info-header">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
-              <h1 className="page-title">{customer.name}</h1>
-              <p className="customer-email">{customer.email}</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">{customer.name}</h1>
+              <p className="text-sm text-gray-600">{customer.email}</p>
             </div>
-            <button className="btn-back" onClick={() => navigate('/customers')}>
+            <button 
+              className="px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center gap-2 hover:bg-gray-50 hover:border-gray-300"
+              onClick={() => navigate('/customers')}
+            >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -121,12 +126,15 @@ const CustomerDetails = () => {
           </div>
 
           {/* Section Title */}
-          <h2 className="section-title">Services</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Services</h2>
 
           {/* View Services Button */}
-          <div className="services-navigation">
+          <div className="mb-6">
             <button 
-              className="btn-view-services" 
+              className="px-5 py-2.5 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center gap-2 hover:-translate-y-0.5 hover:shadow-lg"
+              style={{ backgroundColor: '#4A90E2' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#357ABD'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4A90E2'}
               onClick={() => navigate(`/customers/${id}/services`)}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">

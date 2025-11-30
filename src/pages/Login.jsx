@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { setAuthToken } from '../utils/auth';
 import { API_ENDPOINTS } from '../config/api';
-import './Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -65,31 +64,31 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-container">
-        <div className="login-header">
-          <div className="login-logo">
-            <div className="login-logo-icon">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 p-5">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-10 md:p-12">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-12 h-12 flex items-center justify-center rounded-xl" style={{ backgroundColor: '#4A90E2' }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#4A90E2"/>
                 <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="#4A90E2"/>
               </svg>
             </div>
-            <span className="login-logo-text">SriRam Service</span>
+            <span className="text-2xl font-bold text-gray-800">SriRam Service</span>
           </div>
-          <h1 className="login-title">Welcome Back</h1>
-          <p className="login-subtitle">Sign in to continue to your account</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
+          <p className="text-sm text-gray-600">Sign in to continue to your account</p>
         </div>
 
-        <form className="login-form" onSubmit={handleSubmit}>
+        <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
           {error && (
-            <div className="login-error">
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm text-center border border-red-200">
               {error}
             </div>
           )}
 
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="email" className="text-sm font-semibold text-gray-800">Email Address</label>
             <input
               type="email"
               id="email"
@@ -97,11 +96,12 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 disabled:bg-gray-50 disabled:cursor-not-allowed"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="password" className="text-sm font-semibold text-gray-800">Password</label>
             <input
               type="password"
               id="password"
@@ -109,16 +109,22 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-all focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 disabled:bg-gray-50 disabled:cursor-not-allowed"
             />
           </div>
 
-          <div className="form-options">
-            <Link to="/forgot-password" className="forgot-password">Forgot Password?</Link>
+          <div className="flex justify-end items-center text-sm">
+            <Link to="/forgot-password" className="font-semibold hover:underline transition-colors" style={{ color: '#4A90E2' }} onMouseEnter={(e) => e.currentTarget.style.color = '#357ABD'} onMouseLeave={(e) => e.currentTarget.style.color = '#4A90E2'}>
+              Forgot Password?
+            </Link>
           </div>
 
           <button 
             type="submit" 
-            className="login-button"
+            className="text-white border-none py-3.5 px-6 rounded-lg text-base font-semibold cursor-pointer transition-all mt-2 hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+            style={{ backgroundColor: loading ? '#9CA3AF' : '#4A90E2' }}
+            onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#357ABD')}
+            onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = '#4A90E2')}
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}

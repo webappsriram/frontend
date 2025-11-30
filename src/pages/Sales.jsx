@@ -5,7 +5,6 @@ import Sidebar from '../components/Sidebar';
 import Pagination from '../components/Pagination';
 import { getAuthToken } from '../utils/auth';
 import { API_ENDPOINTS } from '../config/api';
-import './Sales.css';
 
 const Sales = () => {
   const navigate = useNavigate();
@@ -94,7 +93,7 @@ const Sales = () => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showServiceDropdown && !event.target.closest('.service-dropdown-wrapper')) {
+      if (showServiceDropdown && !event.target.closest('[data-service-dropdown]')) {
         setShowServiceDropdown(false);
       }
     };
@@ -598,9 +597,9 @@ const Sales = () => {
         // For email, ensure proper formatting
         const displayTextValue = rawValue;
         return (
-          <div key={fieldName} className="invoice-form-field">
-            <label className="invoice-form-label">
-              {field.label || fieldName} {field.required && <span className="required">*</span>}
+          <div key={fieldName} className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-800">
+              {field.label || fieldName} {field.required && <span className="text-red-500">*</span>}
             </label>
             <input
               type={field.type}
@@ -644,12 +643,16 @@ const Sales = () => {
                   }
                 }
               }}
-              className={`invoice-form-input ${textHasError ? 'error' : ''}`}
+              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                textHasError 
+                  ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                  : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+              }`}
               placeholder={field.placeholder || `Enter ${field.label || fieldName}`}
               maxLength={field.maxLength || undefined}
             />
             {textHasError && (
-              <span className="invoice-form-error">{textHasError}</span>
+              <span className="text-xs text-red-600 -mt-1">{textHasError}</span>
             )}
           </div>
         );
@@ -658,9 +661,9 @@ const Sales = () => {
         // Format phone number for display, but store raw digits
         const displayPhoneValue = formatPhoneNumber(rawValue);
         return (
-          <div key={fieldName} className="invoice-form-field">
-            <label className="invoice-form-label">
-              {field.label || fieldName} {field.required && <span className="required">*</span>}
+          <div key={fieldName} className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-800">
+              {field.label || fieldName} {field.required && <span className="text-red-500">*</span>}
             </label>
             <input
               type="tel"
@@ -688,12 +691,16 @@ const Sales = () => {
                   });
                 }
               }}
-              className={`invoice-form-input ${phoneHasError ? 'error' : ''}`}
+              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                phoneHasError 
+                  ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                  : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+              }`}
               placeholder={field.placeholder || `Enter ${field.label || fieldName} (10 digits)`}
               maxLength={12} // 10 digits + 1 space = 12 chars max
             />
             {phoneHasError && (
-              <span className="invoice-form-error">{phoneHasError}</span>
+              <span className="text-xs text-red-600 -mt-1">{phoneHasError}</span>
             )}
           </div>
         );
@@ -702,9 +709,9 @@ const Sales = () => {
         // Format date value for date input (YYYY-MM-DD)
         const formattedDateValue = parseDateValue(rawValue);
         return (
-          <div key={fieldName} className="invoice-form-field">
-            <label className="invoice-form-label">
-              {field.label || fieldName} {field.required && <span className="required">*</span>}
+          <div key={fieldName} className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-800">
+              {field.label || fieldName} {field.required && <span className="text-red-500">*</span>}
             </label>
             <input
               type="date"
@@ -730,19 +737,23 @@ const Sales = () => {
                   });
                 }
               }}
-              className={`invoice-form-input ${dateHasError ? 'error' : ''}`}
+              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                dateHasError 
+                  ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                  : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+              }`}
             />
             {dateHasError && (
-              <span className="invoice-form-error">{dateHasError}</span>
+              <span className="text-xs text-red-600 -mt-1">{dateHasError}</span>
             )}
           </div>
         );
       case 'textarea':
         const textareaHasError = formErrors[itemIndex]?.[fieldName];
         return (
-          <div key={fieldName} className="invoice-form-field">
-            <label className="invoice-form-label">
-              {field.label || fieldName} {field.required && <span className="required">*</span>}
+          <div key={fieldName} className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-800">
+              {field.label || fieldName} {field.required && <span className="text-red-500">*</span>}
             </label>
             <textarea
               value={rawValue}
@@ -765,12 +776,16 @@ const Sales = () => {
                   });
                 }
               }}
-              className={`invoice-form-textarea ${textareaHasError ? 'error' : ''}`}
+              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all resize-none ${
+                textareaHasError 
+                  ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                  : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+              }`}
               placeholder={field.placeholder || `Enter ${field.label || fieldName}`}
               rows={field.rows || 3}
             />
             {textareaHasError && (
-              <span className="invoice-form-error">{textareaHasError}</span>
+              <span className="text-xs text-red-600 -mt-1">{textareaHasError}</span>
             )}
           </div>
         );
@@ -781,9 +796,9 @@ const Sales = () => {
         // Use raw value for display to allow validation of invalid input
         const displayValue = rawValue || '';
         return (
-          <div key={fieldName} className="invoice-form-field">
-            <label className="invoice-form-label">
-              {field.label || fieldName} {field.required && <span className="required">*</span>}
+          <div key={fieldName} className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-800">
+              {field.label || fieldName} {field.required && <span className="text-red-500">*</span>}
             </label>
             <input
               type="text"
@@ -918,11 +933,15 @@ const Sales = () => {
                   }));
                 }
               }}
-              className={`invoice-form-input ${numberHasError ? 'error' : ''}`}
+              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                numberHasError 
+                  ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                  : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+              }`}
               placeholder={field.placeholder || `Enter ${field.label || fieldName}`}
             />
             {numberHasError && (
-              <span className="invoice-form-error">{numberHasError}</span>
+              <span className="text-xs text-red-600 -mt-1">{numberHasError}</span>
             )}
           </div>
         );
@@ -933,9 +952,9 @@ const Sales = () => {
         const hasError = formErrors[itemIndex]?.[fieldName];
         
         return (
-          <div key={fieldName} className="invoice-form-field">
-            <label className="invoice-form-label">
-              {field.label || fieldName} {field.required && <span className="required">*</span>}
+          <div key={fieldName} className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-800">
+              {field.label || fieldName} {field.required && <span className="text-red-500">*</span>}
             </label>
             <select
               value={rawValue}
@@ -958,7 +977,11 @@ const Sales = () => {
                   });
                 }
               }}
-              className={`invoice-form-select ${hasError ? 'error' : ''}`}
+              className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                hasError 
+                  ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                  : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+              }`}
             >
               <option value="">Select {field.label || fieldName}</option>
               {options.map((opt, optIndex) => {
@@ -973,7 +996,7 @@ const Sales = () => {
               })}
             </select>
             {hasError && (
-              <span className="invoice-form-error">{hasError}</span>
+              <span className="text-xs text-red-600 -mt-1">{hasError}</span>
             )}
           </div>
         );
@@ -1191,7 +1214,7 @@ const Sales = () => {
     // Validate dynamic form fields
     if (!validateFormFields()) {
       // Scroll to first error
-      const firstErrorField = document.querySelector('.invoice-form-field .error, .invoice-form-select.error, .invoice-form-input.error');
+      const firstErrorField = document.querySelector('input.error, select.error, textarea.error');
       if (firstErrorField) {
         firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
         firstErrorField.focus();
@@ -1839,22 +1862,27 @@ const Sales = () => {
   };
 
   return (
-    <div className="invoice-page">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={closeSidebar}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
       />
-      <div className={`invoice-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+      }`}>
         <Header onMenuClick={toggleSidebar} />
-        <div className="invoice-content">
-          <div className="invoice-container">
-            <div className="invoice-header">
-              <h1 className="page-title">Sales</h1>
+        <div className="p-4 md:p-5 bg-gray-100 min-h-[calc(100vh-64px)]">
+          <div className="max-w-[1400px] mx-auto">
+            <div className="flex justify-between items-center mb-5">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Sales</h1>
               {viewMode === 'list' && (
                 <button 
-                  className="btn-primary"
+                  className="px-5 py-2.5 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center justify-center hover:-translate-y-0.5 hover:shadow-lg"
+                  style={{ backgroundColor: '#4A90E2' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#357ABD'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4A90E2'}
                   onClick={() => setViewMode('create')}
                 >
                   + Create Sale
@@ -1862,7 +1890,7 @@ const Sales = () => {
               )}
               {viewMode === 'create' && (
                 <button 
-                  className="btn-secondary"
+                  className="px-5 py-2.5 bg-white text-[#4A90E2] border border-[#4A90E2] rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-gray-50"
                   onClick={() => {
                     setViewMode('list');
                     setSelectedCustomer(null);
@@ -1882,101 +1910,111 @@ const Sales = () => {
             {viewMode === 'list' ? (
               <>
                 {/* Search Bar */}
-                <div className="customers-toolbar">
-                  <div className="search-box">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="#666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M19 19L14.65 14.65" stroke="#666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <div className="mb-5">
+                  <div className="relative flex items-center">
+                    <svg className="absolute left-3 text-gray-400" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M19 19L14.65 14.65" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     <input
                       type="text"
                       placeholder="Search by sale number, customer name..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="search-input"
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Invoices Table */}
-                <div className="services-table-card">
-                  <div className="services-table-container">
-                    <div className="services-table-header">
-                      <div className="services-table-cell">Invoice Number</div>
-                      <div className="services-table-cell">Customer</div>
-                      <div className="services-table-cell">Date</div>
-                      <div className="services-table-cell">Amount</div>
-                      <div className="services-table-cell">Status</div>
-                      <div className="services-table-cell">Actions</div>
+                <div className="bg-white rounded-lg p-4 md:p-5 shadow-sm w-full overflow-visible relative z-10">
+                  <div className="overflow-x-auto w-full min-w-full block">
+                    <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1.2fr] gap-4 pb-3 border-b-2 border-gray-100 mb-3 min-w-full">
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Invoice Number</div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Customer</div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Date</div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Amount</div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Status</div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Actions</div>
                     </div>
-                    <div className="services-table-body">
+                    <div className="flex flex-col gap-0 w-full relative z-0">
                       {isLoading ? (
-                        <div className="services-table-empty">
+                        <div className="py-12 text-center text-gray-500">
                           <p>Loading sales...</p>
                         </div>
                       ) : invoices.length === 0 ? (
-                        <div className="services-table-empty">
+                        <div className="py-12 text-center text-gray-500">
                           <p>No sales found</p>
                         </div>
                       ) : (
-                        invoices.map((invoice) => (
-                          <div key={invoice.id} className="services-table-row">
-                            <div className="services-table-cell" data-label="Invoice Number">
-                              {invoice.invoiceNumber || `INV-${invoice.id}`}
-                            </div>
-                            <div className="services-table-cell" data-label="Customer">
-                              {invoice.customerName || '-'}
-                            </div>
-                            <div className="services-table-cell" data-label="Date">
-                              {invoice.createdOn 
-                                ? new Date(invoice.createdOn).toLocaleDateString('en-IN', { 
-                                    day: '2-digit', 
-                                    month: 'short', 
-                                    year: 'numeric' 
-                                  })
-                                : '-'}
-                            </div>
-                            <div className="services-table-cell" data-label="Amount">
-                              {invoice.totalAmount ? `₹${parseFloat(invoice.totalAmount).toLocaleString('en-IN')}` : '-'}
-                            </div>
-                            <div className="services-table-cell" data-label="Status">
-                              <span className={`status-badge status-${invoice.status?.toLowerCase().replace(/\s+/g, '-') || 'pending'}`}>
-                                {invoice.status || 'Pending'}
-                              </span>
-                            </div>
-                            <div className="services-table-cell" data-label="Actions">
-                              <div className="action-buttons">
-                                <button 
-                                  className="action-btn" 
-                                  title="View"
-                                  onClick={() => handleViewInvoice(invoice.id)}
-                                >
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M8 2C4.5 2 1.73 4.11 1 7C1.73 9.89 4.5 12 8 12C11.5 12 14.27 9.89 15 7C14.27 4.11 11.5 2 8 2ZM8 10.5C6.07 10.5 4.5 8.93 4.5 7C4.5 5.07 6.07 3.5 8 3.5C9.93 3.5 11.5 5.07 11.5 7C11.5 8.93 9.93 10.5 8 10.5ZM8 5C7.17 5 6.5 5.67 6.5 6.5C6.5 7.33 7.17 8 8 8C8.83 8 9.5 7.33 9.5 6.5C9.5 5.67 8.83 5 8 5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </button>
-                                <button 
-                                  className="action-btn" 
-                                  title="Edit"
-                                  onClick={() => handleEditInvoice(invoice.id)}
-                                >
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M8 13.3333H14M10.6667 2.66667C10.9309 2.40245 11.293 2.25245 11.6667 2.25245C12.0404 2.25245 12.4025 2.40245 12.6667 2.66667C12.9309 2.93089 13.0809 3.29301 13.0809 3.66667C13.0809 4.04033 12.9309 4.40245 12.6667 4.66667L5.33333 12L2 13.3333L3.33333 10L10.6667 2.66667Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </button>
-                                <button 
-                                  className="action-btn" 
-                                  title="Download"
-                                  onClick={() => handleDownloadInvoice(invoice.id)}
-                                >
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M8 11L8 3M8 11L5 8M8 11L11 8M3 13L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </button>
+                        invoices.map((invoice) => {
+                          const statusColors = {
+                            'draft': 'bg-gray-100 text-gray-700',
+                            'pending': 'bg-yellow-100 text-yellow-800',
+                            'paid': 'bg-green-100 text-green-800',
+                            'overdue': 'bg-red-100 text-red-800',
+                            'cancelled': 'bg-gray-100 text-gray-600',
+                          };
+                          const statusClass = statusColors[invoice.status?.toLowerCase()] || statusColors['pending'];
+                          return (
+                            <div key={invoice.id} className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1.2fr] gap-4 py-4 border-b border-gray-100 transition-colors w-full min-w-full hover:bg-gray-50">
+                              <div className="text-sm text-gray-800 flex items-center" data-label="Invoice Number">
+                                {invoice.invoiceNumber || `INV-${invoice.id}`}
+                              </div>
+                              <div className="text-sm text-gray-800 flex items-center" data-label="Customer">
+                                {invoice.customerName || '-'}
+                              </div>
+                              <div className="text-sm text-gray-800 flex items-center" data-label="Date">
+                                {invoice.createdOn 
+                                  ? new Date(invoice.createdOn).toLocaleDateString('en-IN', { 
+                                      day: '2-digit', 
+                                      month: 'short', 
+                                      year: 'numeric' 
+                                    })
+                                  : '-'}
+                              </div>
+                              <div className="text-sm text-gray-800 flex items-center" data-label="Amount">
+                                {invoice.totalAmount ? `₹${parseFloat(invoice.totalAmount).toLocaleString('en-IN')}` : '-'}
+                              </div>
+                              <div className="text-sm flex items-center" data-label="Status">
+                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${statusClass}`}>
+                                  {invoice.status || 'Pending'}
+                                </span>
+                              </div>
+                              <div className="text-sm flex items-center" data-label="Actions">
+                                <div className="flex items-center gap-2">
+                                  <button 
+                                    className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md bg-white text-gray-600 hover:bg-gray-50 hover:border-[#4A90E2] hover:text-[#4A90E2] transition-all p-0" 
+                                    title="View"
+                                    onClick={() => handleViewInvoice(invoice.id)}
+                                  >
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                      <path d="M8 2C4.5 2 1.73 4.11 1 7C1.73 9.89 4.5 12 8 12C11.5 12 14.27 9.89 15 7C14.27 4.11 11.5 2 8 2ZM8 10.5C6.07 10.5 4.5 8.93 4.5 7C4.5 5.07 6.07 3.5 8 3.5C9.93 3.5 11.5 5.07 11.5 7C11.5 8.93 9.93 10.5 8 10.5ZM8 5C7.17 5 6.5 5.67 6.5 6.5C6.5 7.33 7.17 8 8 8C8.83 8 9.5 7.33 9.5 6.5C9.5 5.67 8.83 5 8 5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                  <button 
+                                    className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md bg-white text-gray-600 hover:bg-gray-50 hover:border-[#4A90E2] hover:text-[#4A90E2] transition-all p-0" 
+                                    title="Edit"
+                                    onClick={() => handleEditInvoice(invoice.id)}
+                                  >
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                      <path d="M8 13.3333H14M10.6667 2.66667C10.9309 2.40245 11.293 2.25245 11.6667 2.25245C12.0404 2.25245 12.4025 2.40245 12.6667 2.66667C12.9309 2.93089 13.0809 3.29301 13.0809 3.66667C13.0809 4.04033 12.9309 4.40245 12.6667 4.66667L5.33333 12L2 13.3333L3.33333 10L10.6667 2.66667Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                  <button 
+                                    className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md bg-white text-gray-600 hover:bg-gray-50 hover:border-[#4A90E2] hover:text-[#4A90E2] transition-all p-0" 
+                                    title="Download"
+                                    onClick={() => handleDownloadInvoice(invoice.id)}
+                                  >
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                      <path d="M8 11L8 3M8 11L5 8M8 11L11 8M3 13L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                   </div>
@@ -1992,50 +2030,121 @@ const Sales = () => {
                 </div>
               </>
             ) : (
-              <div className="invoice-create-card">
-                <h2 className="invoice-create-title">{editingInvoiceId ? 'Edit Sale' : 'Create New Sale'}</h2>
+              <div className="bg-white rounded-lg p-5 md:p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-800">{editingInvoiceId ? 'Edit Sale' : 'Create New Sale'}</h2>
+                  {selectedCustomer && (
+                    <div className="relative" data-service-dropdown>
+                      <button 
+                        className="px-4 py-2 text-[#4A90E2] border border-[#4A90E2] rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center gap-2 hover:bg-gray-50 whitespace-nowrap"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowServiceDropdown(!showServiceDropdown);
+                          if (!showServiceDropdown) {
+                            setServiceSearchQuery('');
+                          }
+                        }}
+                      >
+                        + Add Service
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transition: 'transform 0.2s', transform: showServiceDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      {showServiceDropdown && (
+                        <div className="absolute top-full right-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000] max-h-80 overflow-hidden flex flex-col">
+                          <div className="relative p-3 border-b border-gray-200">
+                            <svg className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M14 14L10.2 10.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <input
+                              type="text"
+                              className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-[#4A90E2] focus:ring-2 focus:ring-[#4A90E2]/10"
+                              placeholder="Search services..."
+                              value={serviceSearchQuery}
+                              onChange={(e) => setServiceSearchQuery(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                            />
+                          </div>
+                          <div className="overflow-y-auto max-h-64">
+                            {availableServices
+                              .filter(service => 
+                                service.name.toLowerCase().includes(serviceSearchQuery.toLowerCase())
+                              )
+                              .map((service) => (
+                                <div
+                                  key={service.id}
+                                  className="px-4 py-2 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddService(service);
+                                  }}
+                                >
+                                  {service.name}
+                                </div>
+                              ))}
+                            {availableServices.filter(service => 
+                              service.name.toLowerCase().includes(serviceSearchQuery.toLowerCase())
+                            ).length === 0 && (
+                              <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                                No services found
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 
                 {/* Customer Selection */}
-                <div className="invoice-section">
-                  <label className="invoice-label">Select Customer *</label>
-                  <div className="customer-search-wrapper">
-                    <input
-                      type="text"
-                      placeholder="Search by customer name or phone..."
-                      value={customerSearch}
-                      onChange={(e) => {
-                        setCustomerSearch(e.target.value);
-                        if (!e.target.value) {
-                          setSelectedCustomer(null);
-                        }
-                      }}
-                      className="customer-search-input"
-                    />
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">Select Customer *</label>
+                  <div className="relative max-w-md">
+                    {!selectedCustomer ? (
+                      <input
+                        type="text"
+                        placeholder="Search by customer name or phone..."
+                        value={customerSearch}
+                        onChange={(e) => {
+                          setCustomerSearch(e.target.value);
+                          if (!e.target.value) {
+                            setSelectedCustomer(null);
+                          }
+                        }}
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
+                      />
+                    ) : (
+                      <div className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-800">
+                        {selectedCustomer.name} - {selectedCustomer.phone}
+                      </div>
+                    )}
                     {customerResults.length > 0 && (
-                      <div className="customer-results">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000] max-h-60 overflow-y-auto">
                         {customerResults.map((customer) => (
                           <div
                             key={customer.id}
-                            className="customer-result-item"
+                            className="px-4 py-3 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors"
                             onClick={() => handleSelectCustomer(customer)}
                           >
-                            <div className="customer-result-name">{customer.name}</div>
-                            <div className="customer-result-phone">{customer.phone}</div>
+                            <div className="text-sm font-semibold text-gray-800">{customer.name}</div>
+                            <div className="text-xs text-gray-600">{customer.phone}</div>
                             {customer.city && (
-                              <div className="customer-result-location">{customer.city}, {customer.state}</div>
+                              <div className="text-xs text-gray-500 mt-1">{customer.city}, {customer.state}</div>
                             )}
                           </div>
                         ))}
                       </div>
                     )}
                     {customerSearch.trim().length > 0 && customerResults.length === 0 && !selectedCustomer && (
-                      <div className="customer-results">
-                        <div className="customer-not-found">
-                          <div className="customer-not-found-message">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000] p-4">
+                        <div className="text-center">
+                          <div className="text-sm text-gray-600 mb-3">
                             No customer found matching "{customerSearch}"
                           </div>
                           <button
-                            className="btn-add-customer-from-search"
+                            className="px-4 py-2 text-[#4A90E2] border border-[#4A90E2] rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center gap-2 hover:bg-gray-50"
                             onClick={handleAddNewCustomer}
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -2047,28 +2156,34 @@ const Sales = () => {
                       </div>
                     )}
                     {selectedCustomer && (
-                      <div className="selected-customer">
-                        <div className="selected-customer-info">
-                          <strong>{selectedCustomer.name}</strong>
-                          <span>{selectedCustomer.phone}</span>
-                        </div>
-                        <div className="selected-customer-actions">
-                          <button
-                            className="btn-mark-lead"
-                            onClick={() => setShowLeadModal(true)}
-                            title="Mark as Lead"
-                          >
-                            Mark as Lead
-                          </button>
-                          <button
-                            className="btn-remove-customer"
-                            onClick={() => {
-                              setSelectedCustomer(null);
-                              setCustomerSearch('');
-                            }}
-                          >
-                            ×
-                          </button>
+                      <div className="mt-3 max-w-md p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="text-sm font-semibold text-gray-800 mb-1">{selectedCustomer.name}</div>
+                            <div className="text-xs text-gray-600">{selectedCustomer.phone}</div>
+                            {selectedCustomer.city && (
+                              <div className="text-xs text-gray-500 mt-1">{selectedCustomer.city}, {selectedCustomer.state}</div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <button
+                              className="px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-md font-medium cursor-pointer transition-all hover:bg-orange-50"
+                              onClick={() => setShowLeadModal(true)}
+                              title="Mark as Lead"
+                            >
+                              Mark as Lead
+                            </button>
+                            <button
+                              className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all text-xl font-bold leading-none"
+                              onClick={() => {
+                                setSelectedCustomer(null);
+                                setCustomerSearch('');
+                              }}
+                              title="Remove customer"
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -2076,80 +2191,21 @@ const Sales = () => {
                 </div>
 
                 {/* Services Section */}
-                <div className="invoice-section">
-                  <div className="invoice-section-header">
-                    <label className="invoice-label">Services *</label>
-                    <div className="service-dropdown-wrapper">
-                      <button 
-                        className="btn-add-service btn-add-service-dropdown" 
-                        onClick={() => {
-                          setShowServiceDropdown(!showServiceDropdown);
-                          if (!showServiceDropdown) {
-                            setServiceSearchQuery('');
-                          }
-                        }}
-                      >
-                        + Add Service
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ marginLeft: '8px', transition: 'transform 0.2s', transform: showServiceDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      {showServiceDropdown && (
-                        <div className="service-dropdown-menu">
-                          <div className="service-dropdown-search">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="service-search-icon">
-                              <path d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M14 14L10.2 10.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            <input
-                              type="text"
-                              className="service-dropdown-search-input"
-                              placeholder="Search services..."
-                              value={serviceSearchQuery}
-                              onChange={(e) => setServiceSearchQuery(e.target.value)}
-                              onClick={(e) => e.stopPropagation()}
-                              autoFocus
-                            />
-                          </div>
-                          <div className="service-dropdown-list">
-                            {availableServices
-                              .filter(service => 
-                                service.name.toLowerCase().includes(serviceSearchQuery.toLowerCase())
-                              )
-                              .map((service) => (
-                                <div
-                                  key={service.id}
-                                  className="service-dropdown-item"
-                                  onClick={() => handleAddService(service)}
-                                >
-                                  {service.name}
-                                </div>
-                              ))}
-                            {availableServices.filter(service => 
-                              service.name.toLowerCase().includes(serviceSearchQuery.toLowerCase())
-                            ).length === 0 && (
-                              <div className="service-dropdown-empty">
-                                No services found
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-800 mb-4">Services *</label>
                   
                   {invoiceItems.length === 0 ? (
-                    <div className="invoice-empty-state">
-                      <p>No services added. Click "Add Service" to add services to this invoice.</p>
+                    <div className="px-4 py-8 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm">No services added. Click "Add Service" to add services to this invoice.</p>
                     </div>
                   ) : (
-                    <div className="invoice-items-table">
-                      <div className="invoice-items-header">
-                        <div className="invoice-item-cell">Service</div>
-                        <div className="invoice-item-cell">Quantity</div>
-                        <div className="invoice-item-cell">Unit Price (₹)</div>
-                        <div className="invoice-item-cell">Total (₹)</div>
-                        <div className="invoice-item-cell">Action</div>
+                    <div className="overflow-x-auto">
+                      <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr_1fr] gap-4 pb-3 border-b-2 border-gray-100 mb-3 min-w-full">
+                        <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Service</div>
+                        <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Quantity</div>
+                        <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Unit Price (₹)</div>
+                        <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total (₹)</div>
+                        <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Action</div>
                       </div>
                       {invoiceItems.map((item, index) => {
                         // Get formSchema from item first, then fallback to availableServices
@@ -2193,12 +2249,12 @@ const Sales = () => {
                         const hasFormFields = formFields.length > 0;
                         
                         return (
-                          <div key={index} className="invoice-service-item-wrapper">
-                            <div className="invoice-service-item-header">
-                              <span className="invoice-service-name">{item.serviceName || 'Select Service'}</span>
+                          <div key={index} className="mb-4 pb-4 border-b border-gray-200 last:border-b-0">
+                            <div className="mb-3">
+                              <span className="text-sm font-semibold text-gray-800">{item.serviceName || 'Select Service'}</span>
                             </div>
-                            <div className="invoice-item-row">
-                              <div className="invoice-item-cell">
+                            <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr_1fr] gap-4">
+                              <div className="flex flex-col">
                                 <select
                                   value={item.serviceId}
                                   onChange={(e) => {
@@ -2233,7 +2289,11 @@ const Sales = () => {
                                       }));
                                     }
                                   }}
-                                  className={`invoice-select ${serviceErrors[index]?.serviceId ? 'error' : ''}`}
+                                  className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                                    serviceErrors[index]?.serviceId 
+                                      ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                                      : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                                  }`}
                                 >
                                   <option value="">Select Service</option>
                                   {availableServices.map((service) => (
@@ -2243,10 +2303,10 @@ const Sales = () => {
                                   ))}
                                 </select>
                                 {serviceErrors[index]?.serviceId && (
-                                  <span className="invoice-service-error">{serviceErrors[index].serviceId}</span>
+                                  <span className="text-xs text-red-600 mt-1">{serviceErrors[index].serviceId}</span>
                                 )}
                               </div>
-                              <div className="invoice-item-cell">
+                              <div className="flex flex-col">
                                 <input
                                   type="number"
                                   min="0.01"
@@ -2306,13 +2366,17 @@ const Sales = () => {
                                       }
                                     }
                                   }}
-                                  className={`invoice-input ${serviceErrors[index]?.quantity ? 'error' : ''}`}
+                                  className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                                    serviceErrors[index]?.quantity 
+                                      ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                                      : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                                  }`}
                                 />
                                 {serviceErrors[index]?.quantity && (
-                                  <span className="invoice-service-error">{serviceErrors[index].quantity}</span>
+                                  <span className="text-xs text-red-600 mt-1">{serviceErrors[index].quantity}</span>
                                 )}
                               </div>
-                              <div className="invoice-item-cell">
+                              <div className="flex flex-col">
                                 <input
                                   type="number"
                                   min="0"
@@ -2372,18 +2436,22 @@ const Sales = () => {
                                       }
                                     }
                                   }}
-                                  className={`invoice-input ${serviceErrors[index]?.unitPrice ? 'error' : ''}`}
+                                  className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                                    serviceErrors[index]?.unitPrice 
+                                      ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                                      : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                                  }`}
                                 />
                                 {serviceErrors[index]?.unitPrice && (
-                                  <span className="invoice-service-error">{serviceErrors[index].unitPrice}</span>
+                                  <span className="text-xs text-red-600 mt-1">{serviceErrors[index].unitPrice}</span>
                                 )}
                               </div>
-                              <div className="invoice-item-cell">
-                                <strong>₹{((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0)).toFixed(2)}</strong>
+                              <div className="flex items-center">
+                                <strong className="text-gray-800">₹{((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0)).toFixed(2)}</strong>
                               </div>
-                              <div className="invoice-item-cell">
+                              <div className="flex items-center">
                                 <button
-                                  className="btn-remove-item"
+                                  className="px-3 py-1.5 text-red-600 border border-red-200 rounded-md text-sm font-medium cursor-pointer transition-all hover:bg-red-50"
                                   onClick={() => handleRemoveService(index)}
                                 >
                                   Remove
@@ -2391,11 +2459,11 @@ const Sales = () => {
                               </div>
                             </div>
                             {hasFormFields && (
-                              <div className="invoice-item-form-section">
-                                <div className="invoice-item-form-header">
-                                  <span className="invoice-item-form-title">Information</span>
+                              <div className="mt-4 pt-4 border-t border-gray-200">
+                                <div className="mb-3">
+                                  <span className="text-sm font-semibold text-gray-800">Information</span>
                                 </div>
-                                <div className="invoice-item-form-fields">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   {formFields.map((field, fieldIndex) => renderDynamicField(field, fieldIndex, index))}
                                 </div>
                               </div>
@@ -2408,13 +2476,13 @@ const Sales = () => {
                 </div>
 
                 {/* Total and Status */}
-                <div className="invoice-total-section">
-                  <div className="invoice-total-row">
-                    <span className="invoice-total-label">Total Amount:</span>
-                    <span className="invoice-total-value">₹{calculateTotal().toFixed(2)}</span>
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-sm font-semibold text-gray-700">Total Amount:</span>
+                    <span className="text-lg font-bold text-gray-800">₹{calculateTotal().toFixed(2)}</span>
                   </div>
-                  <div className="invoice-status-row">
-                    <label className="invoice-label">Status:</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <label className="text-sm font-semibold text-gray-800 whitespace-nowrap">Status:</label>
                     <select
                       value={invoiceStatus}
                       onChange={(e) => {
@@ -2424,7 +2492,7 @@ const Sales = () => {
                           setPaymentReferenceId('');
                         }
                       }}
-                      className="invoice-status-select"
+                      className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                     >
                       <option value="draft">Draft</option>
                       <option value="pending">Pending</option>
@@ -2436,10 +2504,10 @@ const Sales = () => {
 
                 {/* Payment Method Section - Only show when status is "paid" */}
                 {invoiceStatus === 'paid' && (
-                  <div className="invoice-section payment-method-section">
-                    <label className="invoice-label">Payment Method <span className="required">*</span></label>
-                    <div className="payment-method-options">
-                      <label className="payment-method-option">
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">Payment Method <span className="text-red-500">*</span></label>
+                    <div className="flex flex-wrap gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
                           name="paymentMethod"
@@ -2449,10 +2517,11 @@ const Sales = () => {
                             setPaymentMethod(e.target.value);
                             setPaymentReferenceId('');
                           }}
+                          className="w-4 h-4 text-[#4A90E2] border-gray-300 focus:ring-[#4A90E2]"
                         />
-                        <span>Cash</span>
+                        <span className="text-sm text-gray-800">Cash</span>
                       </label>
-                      <label className="payment-method-option">
+                      <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
                           name="paymentMethod"
@@ -2462,10 +2531,11 @@ const Sales = () => {
                             setPaymentMethod(e.target.value);
                             setPaymentReferenceId('');
                           }}
+                          className="w-4 h-4 text-[#4A90E2] border-gray-300 focus:ring-[#4A90E2]"
                         />
-                        <span>Bank Transfer</span>
+                        <span className="text-sm text-gray-800">Bank Transfer</span>
                       </label>
-                      <label className="payment-method-option">
+                      <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
                           name="paymentMethod"
@@ -2475,10 +2545,11 @@ const Sales = () => {
                             setPaymentMethod(e.target.value);
                             setPaymentReferenceId('');
                           }}
+                          className="w-4 h-4 text-[#4A90E2] border-gray-300 focus:ring-[#4A90E2]"
                         />
-                        <span>UPI</span>
+                        <span className="text-sm text-gray-800">UPI</span>
                       </label>
-                      <label className="payment-method-option">
+                      <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
                           name="paymentMethod"
@@ -2488,22 +2559,23 @@ const Sales = () => {
                             setPaymentMethod(e.target.value);
                             setPaymentReferenceId('');
                           }}
+                          className="w-4 h-4 text-[#4A90E2] border-gray-300 focus:ring-[#4A90E2]"
                         />
-                        <span>Other</span>
+                        <span className="text-sm text-gray-800">Other</span>
                       </label>
                     </div>
 
                     {/* Payment Reference ID - Only show for Bank Transfer or UPI */}
                     {(paymentMethod === 'Bank Transfer' || paymentMethod === 'UPI') && (
-                      <div className="invoice-form-field" style={{ marginTop: '16px' }}>
-                        <label className="invoice-form-label">
+                      <div className="flex flex-col gap-2 mt-4">
+                        <label className="text-sm font-semibold text-gray-800">
                           Reference ID
                         </label>
                         <input
                           type="text"
                           value={paymentReferenceId}
                           onChange={(e) => setPaymentReferenceId(e.target.value)}
-                          className="invoice-form-input"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                           placeholder={`Enter ${paymentMethod === 'Bank Transfer' ? 'transaction' : 'UPI'} reference ID`}
                         />
                       </div>
@@ -2512,9 +2584,20 @@ const Sales = () => {
                 )}
 
                 {/* Create Button */}
-                <div className="invoice-actions">
+                <div className="mt-6 flex justify-end">
                   <button
-                    className="btn-create-invoice"
+                    className="px-5 py-2.5 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center justify-center hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                    style={{ backgroundColor: (isCreating || !selectedCustomer || invoiceItems.length === 0) ? '#9CA3AF' : '#4A90E2' }}
+                    onMouseEnter={(e) => {
+                      if (!isCreating && selectedCustomer && invoiceItems.length > 0) {
+                        e.currentTarget.style.backgroundColor = '#357ABD';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isCreating && selectedCustomer && invoiceItems.length > 0) {
+                        e.currentTarget.style.backgroundColor = '#4A90E2';
+                      }
+                    }}
                     onClick={handleCreateInvoice}
                     disabled={isCreating || !selectedCustomer || invoiceItems.length === 0}
                   >
@@ -2529,12 +2612,18 @@ const Sales = () => {
 
       {/* Lead Modal */}
       {showLeadModal && (
-        <div className="modal-overlay" onClick={() => !isCreatingLead && setShowLeadModal(false)}>
-          <div className="modal-content lead-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Mark as Lead</h2>
+        <div 
+          className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4"
+          onClick={() => !isCreatingLead && setShowLeadModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800">Mark as Lead</h2>
               <button 
-                className="modal-close" 
+                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
                 onClick={() => !isCreatingLead && setShowLeadModal(false)}
                 disabled={isCreatingLead}
               >
@@ -2543,26 +2632,26 @@ const Sales = () => {
                 </svg>
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label htmlFor="leadComments" className="invoice-label">
-                  Comments <span className="required">*</span>
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="leadComments" className="text-sm font-semibold text-gray-800">
+                  Comments <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   id="leadComments"
                   value={leadComments}
                   onChange={(e) => setLeadComments(e.target.value)}
-                  className="invoice-form-textarea"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all resize-none disabled:bg-gray-50 disabled:cursor-not-allowed"
                   placeholder="Enter comments about this lead..."
                   rows="5"
                   disabled={isCreatingLead}
                 />
-                <small className="form-hint">Please provide comments about why this customer is being marked as a lead.</small>
+                <small className="text-xs text-gray-500 mt-1">Please provide comments about why this customer is being marked as a lead.</small>
               </div>
             </div>
-            <div className="modal-footer">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
               <button
-                className="btn-secondary"
+                className="px-5 py-2.5 bg-white text-[#4A90E2] border border-[#4A90E2] rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => {
                   setShowLeadModal(false);
                   setLeadComments('');
@@ -2572,7 +2661,18 @@ const Sales = () => {
                 Cancel
               </button>
               <button
-                className="btn-primary"
+                className="px-5 py-2.5 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center justify-center hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                style={{ backgroundColor: (isCreatingLead || !leadComments.trim()) ? '#9CA3AF' : '#4A90E2' }}
+                onMouseEnter={(e) => {
+                  if (!isCreatingLead && leadComments.trim()) {
+                    e.currentTarget.style.backgroundColor = '#357ABD';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isCreatingLead && leadComments.trim()) {
+                    e.currentTarget.style.backgroundColor = '#4A90E2';
+                  }
+                }}
                 onClick={handleMarkAsLead}
                 disabled={isCreatingLead || !leadComments.trim()}
               >

@@ -1,7 +1,7 @@
 import React from 'react';
 import Pagination from './Pagination';
 import { hasRole } from '../utils/auth';
-import './ServicesTable.css';
+
 
 const ServicesTable = ({
   services,

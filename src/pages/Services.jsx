@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Pagination from '../components/Pagination';
 import { hasRole, getAuthToken } from '../utils/auth';
 import { API_ENDPOINTS } from '../config/api';
-import './Services.css';
+
 
 const Services = () => {
   const navigate = useNavigate();
@@ -647,18 +647,20 @@ const Services = () => {
   };
 
   return (
-    <div className="services-page">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={closeSidebar}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
       />
-      <div className={`services-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+      }`}>
         <Header onMenuClick={toggleSidebar} />
-        <div className="services-content">
-          <div className="services-container">
-            <h1 className="page-title">Services</h1>
+        <div className="p-4 md:p-5 bg-gray-100 min-h-[calc(100vh-64px)]">
+          <div className="max-w-[1400px] mx-auto">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-5">Services</h1>
 
             {/* Search and Add Button Bar */}
             <div className="customers-toolbar">

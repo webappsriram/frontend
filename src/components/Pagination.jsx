@@ -1,5 +1,5 @@
 import React from 'react';
-import './Pagination.css';
+
 
 const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPerPage }) => {
   // Show pagination if there are items, even if only one page
@@ -55,13 +55,13 @@ const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPe
   };
 
   return (
-    <div className="pagination-container">
-      <div className="pagination-info">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <div className="text-sm text-gray-600">
         Showing {startItem} to {endItem} of {totalItems} results
       </div>
-      <div className="pagination-controls">
+      <div className="flex items-center gap-2">
         <button
-          className="pagination-btn"
+          className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md bg-white text-gray-600 hover:bg-gray-50 hover:border-[#4A90E2] hover:text-[#4A90E2] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200 disabled:hover:text-gray-600"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
           aria-label="Previous page"
@@ -71,11 +71,11 @@ const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPe
           </svg>
         </button>
         
-        <div className="pagination-pages">
+        <div className="flex items-center gap-1">
           {getPageNumbers().map((page, index) => {
             if (page === '...') {
               return (
-                <span key={`ellipsis-${index}`} className="pagination-ellipsis">
+                <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
                   ...
                 </span>
               );
@@ -84,7 +84,11 @@ const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPe
             return (
               <button
                 key={page}
-                className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-all ${
+                  currentPage === page 
+                    ? 'bg-[#4A90E2] text-white' 
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:border-[#4A90E2] hover:text-[#4A90E2]'
+                }`}
                 onClick={() => handlePageChange(page)}
                 aria-label={`Page ${page}`}
                 aria-current={currentPage === page ? 'page' : undefined}
@@ -96,7 +100,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPe
         </div>
         
         <button
-          className="pagination-btn"
+          className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md bg-white text-gray-600 hover:bg-gray-50 hover:border-[#4A90E2] hover:text-[#4A90E2] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200 disabled:hover:text-gray-600"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           aria-label="Next page"

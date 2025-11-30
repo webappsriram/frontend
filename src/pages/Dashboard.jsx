@@ -5,7 +5,6 @@ import SummaryCard from '../components/SummaryCard';
 import MonthlyRevenueChart from '../components/MonthlyRevenueChart';
 import NewTemplatesCard from '../components/NewTemplatesCard';
 import RecentInvoices from '../components/RecentInvoices';
-import './Dashboard.css';
 
 const Dashboard = () => {
   // On mobile, sidebar starts closed. On desktop, it's always open
@@ -31,17 +30,19 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar 
         isOpen={sidebarOpen} 
         onClose={closeSidebar}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
       />
-      <div className={`dashboard-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+      }`}>
         <Header onMenuClick={toggleSidebar} />
-        <div className="dashboard-content">
-          <div className="summary-cards">
+        <div className="flex-1 p-4 md:p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
             <SummaryCard
               icon="💰"
               title="Total Revenue"
@@ -76,12 +77,12 @@ const Dashboard = () => {
             />
           </div>
 
-          <div className="dashboard-middle">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
             <MonthlyRevenueChart />
             <NewTemplatesCard />
           </div>
 
-          <div className="dashboard-bottom">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <RecentInvoices />
           </div>
         </div>

@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Pagination from '../components/Pagination';
 import { getAuthToken } from '../utils/auth';
 import { API_ENDPOINTS } from '../config/api';
-import './Invoice.css';
+
 
 const Invoice = () => {
   const navigate = useNavigate();

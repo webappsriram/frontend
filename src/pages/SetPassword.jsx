@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
-import './SetPassword.css';
+
 
 const SetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -109,11 +109,11 @@ const SetPassword = () => {
 
   if (verifying) {
     return (
-      <div className="set-password-page">
-        <div className="set-password-container">
-          <div className="set-password-card">
-            <div className="verifying">
-              <p>Verifying token...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 p-5">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-xl p-10 shadow-2xl">
+            <div className="text-center py-10">
+              <p className="text-base text-gray-600">Verifying token...</p>
             </div>
           </div>
         </div>
@@ -123,14 +123,14 @@ const SetPassword = () => {
 
   if (!tokenValid) {
     return (
-      <div className="set-password-page">
-        <div className="set-password-container">
-          <div className="set-password-card">
-            <div className="error-state">
-              <h2>Invalid or Expired Link</h2>
-              <p>The password setup link is invalid or has expired.</p>
-              <p>Please contact your administrator for a new link.</p>
-              <button onClick={() => navigate('/login')} className="btn-back-login">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 p-5">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-xl p-10 shadow-2xl">
+            <div className="text-center py-5">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Invalid or Expired Link</h2>
+              <p className="text-sm text-gray-600 mb-2">The password setup link is invalid or has expired.</p>
+              <p className="text-sm text-gray-600 mb-6">Please contact your administrator for a new link.</p>
+              <button onClick={() => navigate('/login')} className="py-3 px-6 bg-[#4A90E2] text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-[#357ABD] hover:-translate-y-0.5 hover:shadow-lg">
                 Go to Login
               </button>
             </div>
@@ -141,13 +141,13 @@ const SetPassword = () => {
   }
 
   return (
-    <div className="set-password-page">
-      <div className="set-password-container">
-        <div className="set-password-card">
-          <div className="set-password-header">
-            <h1>{tokenType === 'password_reset' ? 'Reset Your Password' : 'Set Your Password'}</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 p-5">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-xl p-10 shadow-2xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">{tokenType === 'password_reset' ? 'Reset Your Password' : 'Set Your Password'}</h1>
             {userInfo && (
-              <p>
+              <p className="text-sm text-gray-600">
                 Hello {userInfo.name}, 
                 {tokenType === 'password_reset' 
                   ? ' please enter your new password below.' 
@@ -156,42 +156,46 @@ const SetPassword = () => {
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="set-password-form">
-            <div className="form-group">
-              <label htmlFor="password">New Password <span className="required">*</span></label>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="password" className="text-sm font-semibold text-gray-800">New Password <span className="text-red-500">*</span></label>
               <input
                 type="password"
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={errors.password ? 'error' : ''}
+                className={`px-4 py-3 border rounded-lg text-sm transition-all focus:outline-none focus:ring-4 ${
+                  errors.password ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                }`}
                 placeholder="Enter your password"
                 required
               />
-              {errors.password && <span className="error-message">{errors.password}</span>}
+              {errors.password && <span className="text-xs text-red-600 -mt-1">{errors.password}</span>}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password <span className="required">*</span></label>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-800">Confirm Password <span className="text-red-500">*</span></label>
               <input
                 type="password"
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={errors.confirmPassword ? 'error' : ''}
+                className={`px-4 py-3 border rounded-lg text-sm transition-all focus:outline-none focus:ring-4 ${
+                  errors.confirmPassword ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                }`}
                 placeholder="Confirm your password"
                 required
               />
-              {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+              {errors.confirmPassword && <span className="text-xs text-red-600 -mt-1">{errors.confirmPassword}</span>}
             </div>
 
             {errors.submit && (
-              <div className="form-error">
+              <div className="px-3 py-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                 {errors.submit}
               </div>
             )}
 
-            <button type="submit" className="btn-submit" disabled={loading}>
+            <button type="submit" className="py-3 px-6 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all mt-2 hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none" style={{ backgroundColor: loading ? '#9CA3AF' : '#4A90E2' }} disabled={loading}>
               {loading ? 'Setting Password...' : 'Set Password'}
             </button>
           </form>

@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Pagination from '../components/Pagination';
 import { hasRole, getAuthToken } from '../utils/auth';
 import { API_ENDPOINTS } from '../config/api';
-import './AddCustomers.css';
+
 
 const AddCustomers = () => {
   const navigate = useNavigate();
@@ -469,38 +469,46 @@ const AddCustomers = () => {
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
       />
-      <div className={`dashboard-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+      }`}>
         <Header onMenuClick={toggleSidebar} />
-        <div className="add-customers-content">
+        <div className="p-4 md:p-5 bg-gray-100 min-h-[calc(100vh-64px)]">
           {/* Breadcrumbs */}
-          <div className="breadcrumbs">
-            <span className="breadcrumb-item">Admin</span>
-            <span className="breadcrumb-separator">›</span>
-            <span className="breadcrumb-item active">Customers</span>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            <span className="hover:text-gray-800 cursor-pointer">Admin</span>
+            <span className="text-gray-400">›</span>
+            <span className="text-gray-800 font-semibold">Customers</span>
           </div>
 
           {/* Page Title */}
-          <h1 className="page-title">Customers</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-5">Customers</h1>
 
           {/* Search and Add Button Bar */}
-          <div className="customers-toolbar">
-            <div className="search-box">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="#666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M19 19L14.65 14.65" stroke="#666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <div className="flex flex-col sm:flex-row gap-4 mb-5">
+            <div className="relative flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M19 19L14.65 14.65" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <input
                 type="text"
                 placeholder="Search customers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
               />
             </div>
-            <button className="btn-add-customer" onClick={() => {
-              setEditingCustomerId(null);
-              setShowModal(true);
-            }}>
+            <button 
+              className="px-5 py-2.5 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center justify-center gap-2 hover:-translate-y-0.5 hover:shadow-lg whitespace-nowrap"
+              style={{ backgroundColor: '#4A90E2' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#357ABD'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4A90E2'}
+              onClick={() => {
+                setEditingCustomerId(null);
+                setShowModal(true);
+              }}
+            >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -509,46 +517,54 @@ const AddCustomers = () => {
           </div>
 
           {/* Customers Table */}
-          <div className="customers-table-card">
-            <div className="table-container">
-              <div className="table-header">
-                <div className="table-cell">Name</div>
-                <div className="table-cell">Phone</div>
-                <div className="table-cell">Locality</div>
-                <div className="table-cell">Email</div>
-                <div className="table-cell">Gender</div>
-                <div className="table-cell">Actions</div>
+          <div className="bg-white rounded-lg p-4 md:p-5 shadow-sm w-full overflow-visible relative z-10">
+            <div className="overflow-x-auto w-full min-w-full block">
+              <div className="grid grid-cols-[1.5fr_1.2fr_1fr_1.5fr_1fr_1fr] gap-4 pb-3 border-b-2 border-gray-100 mb-3 min-w-full">
+                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Name</div>
+                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Phone</div>
+                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Locality</div>
+                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Email</div>
+                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Gender</div>
+                <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">Actions</div>
               </div>
-              <div className="table-body">
+              <div className="flex flex-col gap-0 w-full relative z-0">
                 {isLoading ? (
-                  <div className="table-empty">
+                  <div className="py-12 text-center text-gray-500">
                     <p>Loading customers...</p>
                   </div>
                 ) : filteredCustomers.length === 0 ? (
-                  <div className="table-empty">
+                  <div className="py-12 text-center text-gray-500">
                     <p>No customers found</p>
                   </div>
                 ) : (
                   filteredCustomers.map((customer) => (
                     <div 
                       key={customer.id} 
-                      className="table-row customer-row-clickable"
+                      className="grid grid-cols-[1.5fr_1.2fr_1fr_1.5fr_1fr_1fr] gap-4 py-4 border-b border-gray-100 transition-colors w-full min-w-full hover:bg-gray-50 cursor-pointer"
                       onClick={() => navigate(`/customers/${customer.id}/services`)}
                     >
-                      <div className="table-cell" data-label="Name">{customer.name}</div>
-                      <div className="table-cell" data-label="Phone">{customer.phone}</div>
-                      <div className="table-cell" data-label="Locality">{customer.locality || '-'}</div>
-                      <div className="table-cell" data-label="Email">{customer.email}</div>
-                      <div className="table-cell" data-label="Gender">{customer.gender}</div>
-                      <div className="table-cell" data-label="Actions" onClick={(e) => e.stopPropagation()}>
-                        <div className="action-buttons">
-                          <button className="action-btn" title="Edit" onClick={() => handleEditCustomer(customer)}>
+                      <div className="text-sm text-gray-800 flex items-center" data-label="Name">{customer.name}</div>
+                      <div className="text-sm text-gray-800 flex items-center" data-label="Phone">{customer.phone}</div>
+                      <div className="text-sm text-gray-800 flex items-center" data-label="Locality">{customer.locality || '-'}</div>
+                      <div className="text-sm text-gray-800 flex items-center" data-label="Email">{customer.email}</div>
+                      <div className="text-sm text-gray-800 flex items-center" data-label="Gender">{customer.gender}</div>
+                      <div className="text-sm flex items-center" data-label="Actions" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md bg-white text-gray-600 hover:bg-gray-50 hover:border-[#4A90E2] hover:text-[#4A90E2] transition-all p-0" 
+                            title="Edit" 
+                            onClick={() => handleEditCustomer(customer)}
+                          >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                               <path d="M8 13.3333H14M10.6667 2.66667C10.9309 2.40245 11.293 2.25245 11.6667 2.25245C12.0404 2.25245 12.4025 2.40245 12.6667 2.66667C12.9309 2.93089 13.0809 3.29301 13.0809 3.66667C13.0809 4.04033 12.9309 4.40245 12.6667 4.66667L5.33333 12L2 13.3333L3.33333 10L10.6667 2.66667Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </button>
                           {hasRole('admin', 'master_user') && (
-                            <button className="action-btn action-btn-delete" title="Delete" onClick={() => handleDeleteCustomer(customer)}>
+                            <button 
+                              className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md bg-white text-gray-600 hover:bg-red-50 hover:border-red-500 hover:text-red-600 transition-all p-0" 
+                              title="Delete" 
+                              onClick={() => handleDeleteCustomer(customer)}
+                            >
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
@@ -576,59 +592,80 @@ const AddCustomers = () => {
 
       {/* Modal Overlay */}
       {showModal && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">{editingCustomerId ? 'Edit Customer' : 'Add Customer'}</h2>
-              <button className="modal-close" onClick={handleCloseModal}>
+        <div 
+          className="fixed inset-0 bg-black/50 z-[200] flex items-center justify-center p-4 overflow-y-auto"
+          onClick={handleCloseModal}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800">{editingCustomerId ? 'Edit Customer' : 'Add Customer'}</h2>
+              <button 
+                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+                onClick={handleCloseModal}
+              >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             </div>
-            <form className="customer-form" onSubmit={handleSubmit}>
-            <div className="form-grid">
+            <form className="flex-1 overflow-y-auto p-6" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Name */}
-              <div className="form-group">
-                <label htmlFor="name">Name <span className="required">*</span></label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="name" className="text-sm font-semibold text-gray-800">Name <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className={errors.name ? 'error' : ''}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                    errors.name 
+                      ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                      : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                  }`}
                   placeholder="Enter customer name"
                 />
-                {errors.name && <span className="error-message">{errors.name}</span>}
+                {errors.name && <span className="text-xs text-red-600 -mt-1">{errors.name}</span>}
               </div>
 
               {/* Email */}
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="email" className="text-sm font-semibold text-gray-800">Email</label>
                 <input
                   type="email"
                   id="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={errors.email ? 'error' : ''}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                    errors.email 
+                      ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                      : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                  }`}
                   placeholder="Enter email address"
                 />
-                {errors.email && <span className="error-message">{errors.email}</span>}
+                {errors.email && <span className="text-xs text-red-600 -mt-1">{errors.email}</span>}
               </div>
 
               {/* Phone */}
-              <div className="form-group phone-whatsapp-column">
-                <label htmlFor="phone">Phone <span className="required">*</span></label>
-                <div className="phone-input-wrapper">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="phone" className="text-sm font-semibold text-gray-800">Phone <span className="text-red-500">*</span></label>
+                <div className="relative">
                   <input
                     type="tel"
                     id="phone"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className={errors.phone ? 'error' : ''}
+                    className={`w-full px-3 py-2 pr-12 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                      errors.phone 
+                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                        : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                    }`}
                     placeholder="Enter phone number"
                     inputMode="numeric"
                     pattern="[0-9]*"
@@ -636,7 +673,11 @@ const AddCustomers = () => {
                   {/* Link Button */}
                   <button
                     type="button"
-                    className={`link-button ${isPhoneLinked ? 'linked' : ''}`}
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-md transition-all ${
+                      isPhoneLinked 
+                        ? 'text-green-600 bg-green-50 hover:bg-green-100' 
+                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                    }`}
                     onClick={togglePhoneLink}
                     title={isPhoneLinked ? 'Unlink phone and WhatsApp' : 'Link phone and WhatsApp'}
                   >
@@ -649,34 +690,39 @@ const AddCustomers = () => {
                     </svg>
                   </button>
                 </div>
-                {errors.phone && <span className="error-message">{errors.phone}</span>}
+                {errors.phone && <span className="text-xs text-red-600 -mt-1">{errors.phone}</span>}
               </div>
 
               {/* WhatsApp Number */}
-              <div className="form-group">
-                <label htmlFor="whatsappNumber">WhatsApp Number</label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="whatsappNumber" className="text-sm font-semibold text-gray-800">WhatsApp Number</label>
                 <input
                   type="tel"
                   id="whatsappNumber"
                   name="whatsappNumber"
                   value={formData.whatsappNumber}
                   onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-4 transition-all ${
+                    isPhoneLinked 
+                      ? 'bg-gray-50 text-gray-500 border-gray-200 cursor-not-allowed' 
+                      : 'bg-white text-gray-800 border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                  }`}
                   placeholder="Enter WhatsApp number"
                   disabled={isPhoneLinked}
-                  className={isPhoneLinked ? 'linked-field' : ''}
                   inputMode="numeric"
                   pattern="[0-9]*"
                 />
               </div>
 
               {/* Gender */}
-              <div className="form-group">
-                <label htmlFor="gender">Gender</label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="gender" className="text-sm font-semibold text-gray-800">Gender</label>
                 <select
                   id="gender"
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                 >
                   <option value="">Select gender</option>
                   <option value="male">Male</option>
@@ -686,57 +732,67 @@ const AddCustomers = () => {
               </div>
 
               {/* Date of Birth */}
-              <div className="form-group">
-                <label htmlFor="dob">Date of Birth <span className="required">*</span></label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="dob" className="text-sm font-semibold text-gray-800">Date of Birth <span className="text-red-500">*</span></label>
                 <input
                   type="date"
                   id="dob"
                   name="dob"
                   value={formData.dob}
                   onChange={handleChange}
-                  className={errors.dob ? 'error' : ''}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                    errors.dob 
+                      ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                      : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                  }`}
                   max={new Date().toISOString().split('T')[0]}
                 />
-                {errors.dob && <span className="error-message">{errors.dob}</span>}
+                {errors.dob && <span className="text-xs text-red-600 -mt-1">{errors.dob}</span>}
               </div>
 
               {/* Address */}
-              <div className="form-group full-width">
-                <label htmlFor="address">Address</label>
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label htmlFor="address" className="text-sm font-semibold text-gray-800">Address</label>
                 <input
                   type="text"
                   id="address"
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                   placeholder="Enter street address"
                 />
               </div>
 
               {/* Zip Code */}
-              <div className="form-group full-width">
-                <label htmlFor="zipCode">Zip Code <span className="required">*</span></label>
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label htmlFor="zipCode" className="text-sm font-semibold text-gray-800">Zip Code <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   id="zipCode"
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleChange}
-                  className={errors.zipCode ? 'error' : ''}
+                  className={`w-full px-3 py-2 border rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:ring-4 transition-all ${
+                    errors.zipCode 
+                      ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/10' 
+                      : 'border-gray-200 focus:border-[#4A90E2] focus:ring-[#4A90E2]/10'
+                  }`}
                   placeholder="Enter zip code"
                 />
-                {errors.zipCode && <span className="error-message">{errors.zipCode}</span>}
+                {errors.zipCode && <span className="text-xs text-red-600 -mt-1">{errors.zipCode}</span>}
               </div>
 
               {/* Locality */}
-              <div className="form-group">
-                <label htmlFor="locality">Locality</label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="locality" className="text-sm font-semibold text-gray-800">Locality</label>
                 {postOffices.length > 0 ? (
                   <select
                     id="locality"
                     name="locality"
                     value={formData.locality}
                     onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                   >
                     <option value="">Select Post Office</option>
                     {postOffices.map((postOffice, index) => (
@@ -752,57 +808,80 @@ const AddCustomers = () => {
                     name="locality"
                     value={formData.locality}
                     onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                     placeholder="Enter locality / Post Office"
                   />
                 )}
               </div>
 
               {/* City */}
-              <div className="form-group">
-                <label htmlFor="city">City</label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="city" className="text-sm font-semibold text-gray-800">City</label>
                 <input
                   type="text"
                   id="city"
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                   placeholder="Enter city"
                 />
               </div>
 
               {/* State */}
-              <div className="form-group">
-                <label htmlFor="state">State</label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="state" className="text-sm font-semibold text-gray-800">State</label>
                 <input
                   type="text"
                   id="state"
                   name="state"
                   value={formData.state}
                   onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                   placeholder="Enter state"
                 />
               </div>
 
               {/* Country */}
-              <div className="form-group">
-                <label htmlFor="country">Country</label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="country" className="text-sm font-semibold text-gray-800">Country</label>
                 <input
                   type="text"
                   id="country"
                   name="country"
                   value={formData.country}
                   onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
                   placeholder="Enter country"
                 />
               </div>
             </div>
 
               {/* Form Actions */}
-              <div className="form-actions">
-                <button type="button" className="btn-cancel" onClick={handleCloseModal}>
+              <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
+                <button 
+                  type="button" 
+                  className="px-5 py-2.5 bg-white text-[#4A90E2] border border-[#4A90E2] rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-gray-50"
+                  onClick={handleCloseModal}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                <button 
+                  type="submit" 
+                  className="px-5 py-2.5 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center justify-center hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                  style={{ backgroundColor: isSubmitting ? '#9CA3AF' : '#4A90E2' }}
+                  onMouseEnter={(e) => {
+                    if (!isSubmitting) {
+                      e.currentTarget.style.backgroundColor = '#357ABD';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSubmitting) {
+                      e.currentTarget.style.backgroundColor = '#4A90E2';
+                    }
+                  }}
+                  disabled={isSubmitting}
+                >
                   {isSubmitting 
                     ? (editingCustomerId ? 'Updating...' : 'Adding...') 
                     : (editingCustomerId ? 'Update Customer' : 'Add Customer')

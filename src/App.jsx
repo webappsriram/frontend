@@ -12,7 +12,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import EditProfile from './pages/EditProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
-import './App.css';
+
 
 function App() {
   return (

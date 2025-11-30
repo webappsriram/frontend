@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import ServicesTable from '../components/ServicesTable';
 import { hasRole, getAuthToken } from '../utils/auth';
 import { API_ENDPOINTS } from '../config/api';
-import './CustomerServices.css';
+
 
 const CustomerServices = () => {
   const { id } = useParams();
@@ -830,16 +830,18 @@ const CustomerServices = () => {
 
   if (isLoading) {
     return (
-      <div className="customer-services-page">
+      <div className="flex min-h-screen bg-gray-100">
         <Sidebar 
           isOpen={sidebarOpen} 
           onClose={closeSidebar}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={toggleSidebarCollapse}
         />
-        <div className={`customer-services-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${
+          sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+        }`}>
           <Header onMenuClick={toggleSidebar} />
-          <div className="loading-container">
+          <div className="flex justify-center items-center min-h-screen text-base text-gray-600">
             <p>Loading...</p>
           </div>
         </div>
@@ -848,16 +850,18 @@ const CustomerServices = () => {
   }
 
   return (
-    <div className="customer-services-page">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar 
         isOpen={sidebarOpen} 
         onClose={closeSidebar}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
       />
-      <div className={`customer-services-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+      }`}>
         <Header onMenuClick={toggleSidebar} />
-        <div className="customer-services-content">
+        <div className="p-4 md:p-5 bg-gray-100 min-h-[calc(100vh-64px)] relative">
           {/* Breadcrumbs */}
           <div className="breadcrumbs">
             <span className="breadcrumb-item" onClick={() => navigate('/customers')}>Customers</span>
