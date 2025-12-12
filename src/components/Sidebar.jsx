@@ -12,6 +12,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
     { icon: '📊', label: 'Dashboard', path: '/dashboard' },
     { icon: '📄', label: 'Sales', path: '/sales' },
     { icon: '👥', label: 'Customer', path: '/customers' },
+    { icon: '📋', label: 'View Data', path: '/view-data' },
     // { icon: '📦', label: 'Order', path: '/orders' },
     // { icon: '🛍️', label: 'Product', path: '/products' },
     // { icon: '👔', label: 'Employee', path: '/employees' },

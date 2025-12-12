@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://your-backend-domain.com' : 'http://192.168.1.43:5001');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'http://172.20.10.12:5001' : 'http://172.20.10.12:5001');
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -35,12 +35,27 @@ export const API_ENDPOINTS = {
   },
   LEADS: {
     BASE: `${API_BASE_URL}/api/leads`,
+    CHECK: (customerId) => `${API_BASE_URL}/api/leads/check/${customerId}`,
   },
   PASSWORD: {
     SET_PASSWORD: `${API_BASE_URL}/api/password/set-password`,
     RESET_PASSWORD: `${API_BASE_URL}/api/password/reset-password`,
     FORGOT_PASSWORD: `${API_BASE_URL}/api/password/forgot-password`,
     VERIFY_TOKEN: (token) => `${API_BASE_URL}/api/password/verify-token/${token}`,
+  },
+  DASHBOARD: {
+    STATS: `${API_BASE_URL}/api/dashboard/stats`,
+    WEEKLY_REVENUE: `${API_BASE_URL}/api/dashboard/weekly-revenue`,
+  },
+  FORM_DATA: {
+    BASE: `${API_BASE_URL}/api/form-data`,
+    BY_ID: (id) => `${API_BASE_URL}/api/form-data/${id}`,
+  },
+  ATTENDANCE: {
+    BASE: `${API_BASE_URL}/api/attendance`,
+    TODAY: `${API_BASE_URL}/api/attendance/today`,
+    SIGN_IN: `${API_BASE_URL}/api/attendance/sign-in`,
+    SIGN_OUT: `${API_BASE_URL}/api/attendance/sign-out`,
   },
   HEALTH: `${API_BASE_URL}/api/health`,
 };

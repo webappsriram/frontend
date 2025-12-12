@@ -30,8 +30,81 @@ const Invoice = () => {
   });
   const itemsPerPage = 10;
   const [editingInvoiceId, setEditingInvoiceId] = useState(null);
+  // View invoice modal state
   const [viewingInvoice, setViewingInvoice] = useState(null);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [isLoadingView, setIsLoadingView] = useState(false);
+
+  // Inject modal styles when modal is shown
+  useEffect(() => {
+    if (showViewModal) {
+      const styleId = 'invoice-view-modal-styles';
+      const existingStyle = document.getElementById(styleId);
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+      
+      const styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      styleTag.innerHTML = `
+        .invoice-view-modal-overlay {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          background-color: rgba(0, 0, 0, 0.6) !important;
+          z-index: 99999 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 20px !important;
+          margin: 0 !important;
+        }
+        .invoice-view-modal-content {
+          background-color: white !important;
+          border-radius: 12px !important;
+          max-width: 850px !important;
+          width: 100% !important;
+          max-height: 95vh !important;
+          overflow: hidden !important;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+          display: flex !important;
+          flex-direction: column !important;
+          margin: 0 !important;
+          position: relative !important;
+        }
+        .invoice-view-modal-content * {
+          box-sizing: border-box !important;
+        }
+        .invoice-view-modal-content h1,
+        .invoice-view-modal-content h2,
+        .invoice-view-modal-content h3,
+        .invoice-view-modal-content p,
+        .invoice-view-modal-content div,
+        .invoice-view-modal-content span {
+          margin: 0 !important;
+        }
+        .invoice-view-modal-content table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+        }
+        .invoice-view-modal-content th,
+        .invoice-view-modal-content td {
+          padding: 12px !important;
+          text-align: left !important;
+        }
+      `;
+      document.head.appendChild(styleTag);
+      
+      return () => {
+        const styleToRemove = document.getElementById(styleId);
+        if (styleToRemove) {
+          styleToRemove.remove();
+        }
+      };
+    }
+  }, [showViewModal]);
 
   // Create invoice state
   const [customerSearch, setCustomerSearch] = useState('');
@@ -735,8 +808,27 @@ const Invoice = () => {
   };
 
   const handleViewInvoice = async (invoiceId) => {
+    if (!invoiceId) {
+      alert('Invalid invoice ID');
+      return;
+    }
+    
+    // Show modal immediately - this must happen first
+    setShowViewModal(true);
+    setIsLoadingView(true);
+    setViewingInvoice(null);
+    document.body.style.overflow = 'hidden';
+    
     try {
       const token = getAuthToken();
+      if (!token) {
+        alert('Please login to view invoices');
+        setShowViewModal(false);
+        setIsLoadingView(false);
+        document.body.style.overflow = '';
+        return;
+      }
+
       const response = await fetch(API_ENDPOINTS.SALES.BY_ID(invoiceId), {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -746,19 +838,48 @@ const Invoice = () => {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data && data.data.invoice) {
-          setViewingInvoice(data.data.invoice);
-          setShowInvoiceModal(true);
+        // The API returns: { success: true, data: { invoice: {...} } }
+        const invoice = data.data?.invoice;
+        
+        if (invoice && invoice.id) {
+          // Ensure items is an array
+          if (!invoice.items || !Array.isArray(invoice.items)) {
+            invoice.items = [];
+          }
+          // Ensure customer exists
+          if (!invoice.customer) {
+            invoice.customer = {};
+          }
+          // Set the invoice data
+          setViewingInvoice(invoice);
+          setIsLoadingView(false);
         } else {
-          alert('Failed to load sale details');
+          alert('Failed to load invoice: Invoice data not found or invalid.');
+          console.error('Invoice response:', data);
+          setShowViewModal(false);
+          setIsLoadingView(false);
+          document.body.style.overflow = '';
         }
       } else {
-        alert('Failed to load invoice details');
+        const errorData = await response.json().catch(() => ({}));
+        alert('Failed to load invoice: ' + (errorData.message || 'Server error'));
+        setShowViewModal(false);
+        setIsLoadingView(false);
+        document.body.style.overflow = '';
       }
     } catch (error) {
-      console.error('Error loading invoice:', error);
-      alert('Failed to load invoice details');
+      alert('Failed to load invoice: ' + (error.message || 'Network error'));
+      setShowViewModal(false);
+      setIsLoadingView(false);
+      document.body.style.overflow = '';
     }
+  };
+
+  const closeViewModal = () => {
+    setShowViewModal(false);
+    setViewingInvoice(null);
+    setIsLoadingView(false);
+    document.body.style.overflow = '';
   };
 
   const handleDownloadInvoice = async (invoiceId) => {
@@ -922,19 +1043,29 @@ const Invoice = () => {
     const invoiceDate = invoice.createdOn 
       ? new Date(invoice.createdOn).toLocaleDateString('en-US', { 
           year: 'numeric', 
-          month: 'short', 
+          month: 'long', 
           day: 'numeric' 
         })
       : new Date().toLocaleDateString('en-US', { 
           year: 'numeric', 
-          month: 'short', 
+          month: 'long', 
           day: 'numeric' 
         });
+
+    // Calculate subtotal
+    const subtotal = invoice.items.reduce((sum, item) => {
+      return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0));
+    }, 0);
+    
+    // Calculate tax (assuming 0% for now, can be added later)
+    const salesTax = 0;
+    const pnp = 0; // Postage & Packaging
+    const totalDue = parseFloat(invoice.totalAmount) || subtotal;
 
     let itemsHTML = '';
     invoice.items.forEach((item, index) => {
       const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
-      let description = `${item.serviceName} (Qty: ${item.quantity} × ₹${parseFloat(item.unitPrice).toFixed(2)})`;
+      let description = item.serviceName;
       
       // Add form data as additional information
       if (item.formData && Object.keys(item.formData).length > 0) {
@@ -943,57 +1074,106 @@ const Invoice = () => {
           .map(([key, value]) => `${key}: ${value}`)
           .join(', ');
         if (formInfo) {
-          description += `<br><small style="color: #666; margin-left: 20px;">${formInfo}</small>`;
+          description += ` (${formInfo})`;
         }
       }
       
       itemsHTML += `
         <tr>
+          <td>${item.quantity || ''}</td>
           <td>${description}</td>
+          <td style="text-align: right;">₹${parseFloat(item.unitPrice || 0).toFixed(2)}</td>
           <td style="text-align: right;">₹${itemTotal.toFixed(2)}</td>
         </tr>
       `;
     });
 
+    // Get customer address parts
+    const customerAddress = invoice.customer?.address || '';
+    const customerCity = invoice.customer?.city || '';
+    const customerState = invoice.customer?.state || '';
+    const customerZip = invoice.customer?.zipCode || '';
+    const customerLocation = `${customerCity}${customerCity && customerState ? ', ' : ''}${customerState} ${customerZip}`.trim();
+
     return `
       <div class="invoice-container">
         <div class="invoice-header">
           <div class="invoice-company">
-            <h1>SriRam E-sevaiMiyam</h1>
-            <p>[Street Address]</p>
-            <p>[City, ST ZIP]</p>
-            <p>Phone: [Phone Number]</p>
+            <h1>[Your Company Name]</h1>
+            <p class="company-slogan">[Your Company Slogan]</p>
+            <p>[Address]</p>
+            <p>[Town, County Postal Code]</p>
+            <p>Phone [01234 567890] Fax [01234 567890]</p>
           </div>
           <div class="invoice-title-section">
             <h1 class="invoice-title">INVOICE</h1>
-            <table class="invoice-meta">
-              <tr>
-                <td><strong>INVOICE#</strong></td>
-                <td>${invoice.invoiceNumber || `INV-${invoice.id}`}</td>
-              </tr>
-              <tr>
-                <td><strong>DATE</strong></td>
-                <td>${invoiceDate}</td>
-              </tr>
-            </table>
+            <div class="invoice-meta">
+              <div class="invoice-meta-row">
+                <span class="invoice-meta-label">INVOICE No</span>
+                <span class="invoice-meta-value">[${invoice.invoiceNumber || `INV-${invoice.id}`}]</span>
+              </div>
+              <div class="invoice-meta-row">
+                <span class="invoice-meta-label">DATE:</span>
+                <span class="invoice-meta-value">${invoiceDate}</span>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div class="invoice-bill-to">
-          <div class="bill-to-header">BILL TO</div>
-          <div class="bill-to-content">
-            <p><strong>${invoice.customer?.name || 'N/A'}</strong></p>
-            ${invoice.customer?.address ? `<p>${invoice.customer.address}</p>` : ''}
-            <p>${invoice.customer?.city || ''}${invoice.customer?.city && invoice.customer?.state ? ', ' : ''}${invoice.customer?.state || ''} ${invoice.customer?.zipCode || ''}</p>
-            <p>${invoice.customer?.phone || 'N/A'}</p>
-            ${invoice.customer?.email ? `<p>${invoice.customer.email}</p>` : ''}
+        <div class="invoice-addresses">
+          <div class="invoice-address-section">
+            <div class="address-label">Billing Address:</div>
+            <div class="address-content">
+              <p>[${invoice.customer?.name || 'Name'}]</p>
+              <p>[${invoice.customer?.company || 'Company'}]</p>
+              <p>[${customerAddress || 'Address'}]</p>
+              <p>[${customerLocation || 'Town, County Postal Code'}]</p>
+              <p>[${invoice.customer?.phone || 'Phone'}]</p>
+            </div>
+          </div>
+          <div class="invoice-address-section">
+            <div class="address-label">Delivery Address:</div>
+            <div class="address-content">
+              <p>[${invoice.customer?.name || 'Name'}]</p>
+              <p>[${invoice.customer?.company || 'Company'}]</p>
+              <p>[${customerAddress || 'Address'}]</p>
+              <p>[${customerLocation || 'Town, County Postal Code'}]</p>
+              <p>[${invoice.customer?.phone || 'Phone'}]</p>
+            </div>
           </div>
         </div>
+        
+        <div class="invoice-instructions">
+          <p>Comments or special instructions:</p>
+        </div>
+        
+        <table class="invoice-info-table">
+          <tbody>
+            <tr>
+              <td class="info-label">SALESPERSON</td>
+              <td class="info-label">P.O. NUMBER</td>
+              <td class="info-label">SENT DATE</td>
+              <td class="info-label">SENT VIA</td>
+              <td class="info-label">F.O.B. POINT</td>
+              <td class="info-label">TERMS</td>
+            </tr>
+            <tr>
+              <td class="info-value"></td>
+              <td class="info-value"></td>
+              <td class="info-value"></td>
+              <td class="info-value"></td>
+              <td class="info-value"></td>
+              <td class="info-value">Due on receipt</td>
+            </tr>
+          </tbody>
+        </table>
         
         <table class="invoice-items">
           <thead>
             <tr>
+              <th>QUANTITY</th>
               <th>DESCRIPTION</th>
+              <th style="text-align: right;">UNIT PRICE</th>
               <th style="text-align: right;">AMOUNT</th>
             </tr>
           </thead>
@@ -1002,24 +1182,29 @@ const Invoice = () => {
           </tbody>
         </table>
         
-        <div class="invoice-footer">
-          <div class="invoice-thanks">Thank you for your business!</div>
-          <div class="invoice-total-section">
-            <div class="invoice-total-label">TOTAL</div>
-            <div class="invoice-total-amount">₹${parseFloat(invoice.totalAmount).toFixed(2)}</div>
+        <div class="invoice-summary">
+          <div class="summary-row">
+            <div class="summary-label">SUBTOTAL</div>
+            <div class="summary-value">₹${subtotal.toFixed(2)}</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">SALES TAX</div>
+            <div class="summary-value">₹${salesTax.toFixed(2)}</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">P&P</div>
+            <div class="summary-value">₹${pnp.toFixed(2)}</div>
+          </div>
+          <div class="summary-row total-row">
+            <div class="summary-label">TOTAL DUE</div>
+            <div class="summary-value">₹${totalDue.toFixed(2)}</div>
           </div>
         </div>
         
-        ${invoice.status === 'paid' && invoice.paymentMethod ? `
-        <div class="invoice-payment-info">
-          <div class="invoice-payment-label">Payment Method:</div>
-          <div class="invoice-payment-value">${invoice.paymentMethod}${invoice.paymentReferenceId ? ` (Ref: ${invoice.paymentReferenceId})` : ''}</div>
-        </div>
-        ` : ''}
-        
-        <div class="invoice-contact">
-          <p>If you have any questions about this invoice, please contact</p>
-          <p>[Name, Phone, email@address.com]</p>
+        <div class="invoice-footer">
+          <p>Make all cheques payable to [Your Company Name]</p>
+          <p>If you have any questions concerning this invoice, contact [Name, Phone Number, E-mail]</p>
+          <p class="footer-thanks">THANK YOU FOR YOUR BUSINESS!</p>
         </div>
       </div>
     `;
@@ -1027,197 +1212,254 @@ const Invoice = () => {
 
   const getInvoiceStyles = () => {
     return `
-      * {
+      #invoice-modal-content * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
       
-      body {
-        font-family: Arial, sans-serif;
+      #invoice-modal-content {
+        font-family: Arial, Helvetica, sans-serif;
         font-size: 12px;
-        color: #333;
-        padding: 20px;
+        color: #000;
         background: white;
+        line-height: 1.4;
       }
       
-      .invoice-container {
+      #invoice-modal-content .invoice-container {
         max-width: 800px;
         margin: 0 auto;
         background: white;
       }
       
-      .invoice-header {
+      #invoice-modal-content .invoice-header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
       }
       
-      .invoice-company h1 {
-        font-size: 24px;
+      #invoice-modal-content .invoice-company {
+        flex: 1;
+      }
+      
+      #invoice-modal-content .invoice-company h1 {
+        font-size: 18px;
         font-weight: bold;
-        margin-bottom: 10px;
-        color: #333;
+        margin-bottom: 4px;
+        color: #000;
       }
       
-      .invoice-company p {
+      #invoice-modal-content .company-slogan {
         font-size: 11px;
         color: #666;
+        margin-bottom: 8px;
+      }
+      
+      #invoice-modal-content .invoice-company p {
+        font-size: 11px;
+        color: #000;
         margin: 2px 0;
       }
       
-      .invoice-title-section {
+      #invoice-modal-content .invoice-title-section {
         text-align: right;
+        flex: 1;
       }
       
-      .invoice-title {
-        font-size: 48px;
+      #invoice-modal-content .invoice-title {
+        font-size: 42px;
         font-weight: bold;
-        color: #999;
-        margin-bottom: 10px;
+        color: #000;
+        margin-bottom: 8px;
+        letter-spacing: 2px;
       }
       
-      .invoice-meta {
-        border-collapse: collapse;
-        margin-top: 10px;
+      #invoice-modal-content .invoice-meta {
+        margin-top: 8px;
       }
       
-      .invoice-meta td {
-        padding: 4px 8px;
+      #invoice-modal-content .invoice-meta-row {
+        margin-bottom: 4px;
         font-size: 11px;
       }
       
-      .invoice-meta td:first-child {
-        text-align: right;
-        padding-right: 15px;
+      #invoice-modal-content .invoice-meta-label {
+        font-weight: normal;
+        margin-right: 8px;
       }
       
-      .invoice-bill-to {
-        margin-bottom: 30px;
+      #invoice-modal-content .invoice-meta-value {
+        font-weight: normal;
       }
       
-      .bill-to-header {
-        background: #666;
-        color: white;
-        padding: 8px 12px;
+      #invoice-modal-content .invoice-addresses {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        gap: 30px;
+      }
+      
+      #invoice-modal-content .invoice-address-section {
+        flex: 1;
+      }
+      
+      #invoice-modal-content .address-label {
         font-weight: bold;
         font-size: 11px;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
+        color: #000;
       }
       
-      .bill-to-content {
-        padding-left: 12px;
-      }
-      
-      .bill-to-content p {
+      #invoice-modal-content .address-content {
         font-size: 11px;
-        margin: 3px 0;
-        color: #333;
+        color: #000;
       }
       
-      .invoice-items {
+      #invoice-modal-content .address-content p {
+        margin: 2px 0;
+      }
+      
+      #invoice-modal-content .invoice-instructions {
+        margin-bottom: 15px;
+        font-size: 11px;
+        color: #000;
+      }
+      
+      #invoice-modal-content .invoice-info-table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
+        font-size: 10px;
       }
       
-      .invoice-items thead {
-        background: #666;
-        color: white;
+      #invoice-modal-content .invoice-info-table tr:first-child {
+        border-bottom: 1px solid #ddd;
       }
       
-      .invoice-items th {
-        padding: 10px 12px;
+      #invoice-modal-content .invoice-info-table td {
+        padding: 6px 4px;
+        text-align: left;
+      }
+      
+      #invoice-modal-content .info-label {
+        font-weight: bold;
+        font-size: 9px;
+        color: #000;
+      }
+      
+      #invoice-modal-content .info-value {
+        font-size: 10px;
+        color: #000;
+      }
+      
+      #invoice-modal-content .invoice-items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        border: 1px solid #000;
+      }
+      
+      #invoice-modal-content .invoice-items thead {
+        background: #f0f0f0;
+      }
+      
+      #invoice-modal-content .invoice-items th {
+        padding: 8px 6px;
         text-align: left;
         font-weight: bold;
-        font-size: 11px;
+        font-size: 10px;
+        border: 1px solid #000;
+        border-bottom: 2px solid #000;
       }
       
-      .invoice-items th:last-child {
+      #invoice-modal-content .invoice-items th:last-child,
+      #invoice-modal-content .invoice-items th:nth-child(3),
+      #invoice-modal-content .invoice-items th:nth-child(4) {
         text-align: right;
       }
       
-      .invoice-items td {
-        padding: 10px 12px;
-        border-bottom: 1px solid #ddd;
+      #invoice-modal-content .invoice-items td {
+        padding: 6px;
+        border: 1px solid #ddd;
         font-size: 11px;
+        border-right: 1px solid #000;
       }
       
-      .invoice-items td:last-child {
+      #invoice-modal-content .invoice-items tbody tr:last-child td {
+        border-bottom: 1px solid #000;
+      }
+      
+      #invoice-modal-content .invoice-items td:last-child,
+      #invoice-modal-content .invoice-items td:nth-child(3),
+      #invoice-modal-content .invoice-items td:nth-child(4) {
         text-align: right;
       }
       
-      .invoice-footer {
+      #invoice-modal-content .invoice-summary {
+        width: 100%;
+        max-width: 300px;
+        margin-left: auto;
+        margin-bottom: 30px;
+      }
+      
+      #invoice-modal-content .summary-row {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        margin-top: 30px;
-        margin-bottom: 40px;
+        padding: 6px 8px;
+        font-size: 11px;
+        border-bottom: 1px solid #ddd;
       }
       
-      .invoice-thanks {
+      #invoice-modal-content .summary-row.total-row {
+        border-top: 2px solid #000;
+        border-bottom: 2px solid #000;
+        font-weight: bold;
         font-size: 12px;
-        color: #333;
+        padding: 8px;
+        margin-top: 4px;
       }
       
-      .invoice-total-section {
+      #invoice-modal-content .summary-label {
+        font-weight: bold;
+        color: #000;
+      }
+      
+      #invoice-modal-content .summary-value {
+        color: #000;
         text-align: right;
       }
       
-      .invoice-total-label {
-        background: #666;
-        color: white;
-        padding: 8px 12px;
-        font-weight: bold;
-        font-size: 11px;
-        margin-bottom: 5px;
-      }
-      
-      .invoice-total-amount {
-        font-size: 24px;
-        font-weight: bold;
-        color: #333;
-        padding: 5px 12px;
-      }
-      
-      .invoice-payment-info {
-        margin-top: 20px;
-        padding: 12px;
-        background: #f5f5f5;
-        border-radius: 4px;
-        font-size: 11px;
-      }
-      
-      .invoice-payment-label {
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 4px;
-      }
-      
-      .invoice-payment-value {
-        color: #666;
-      }
-      
-      .invoice-contact {
+      #invoice-modal-content .invoice-footer {
         text-align: center;
         margin-top: 40px;
         padding-top: 20px;
         border-top: 1px solid #ddd;
         font-size: 10px;
-        color: #666;
+        color: #000;
       }
       
-      .invoice-contact p {
-        margin: 3px 0;
+      #invoice-modal-content .invoice-footer p {
+        margin: 4px 0;
+      }
+      
+      #invoice-modal-content .footer-thanks {
+        font-weight: bold;
+        font-size: 11px;
+        margin-top: 10px;
+        letter-spacing: 1px;
       }
       
       @media print {
-        body {
-          padding: 0;
+        #invoice-modal-content {
+          padding: 10px;
         }
         
-        .invoice-container {
+        #invoice-modal-content .invoice-container {
           max-width: 100%;
+        }
+        
+        @page {
+          margin: 0.5cm;
         }
       }
     `;
@@ -1346,7 +1588,17 @@ const Invoice = () => {
                                 <button 
                                   className="action-btn" 
                                   title="View"
-                                  onClick={() => handleViewInvoice(invoice.id)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (invoice && invoice.id) {
+                                      handleViewInvoice(invoice.id);
+                                    } else {
+                                      alert('Invalid invoice data');
+                                    }
+                                  }}
+                                  type="button"
+                                  style={{ cursor: 'pointer' }}
                                 >
                                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                     <path d="M8 2C4.5 2 1.73 4.11 1 7C1.73 9.89 4.5 12 8 12C11.5 12 14.27 9.89 15 7C14.27 4.11 11.5 2 8 2ZM8 10.5C6.07 10.5 4.5 8.93 4.5 7C4.5 5.07 6.07 3.5 8 3.5C9.93 3.5 11.5 5.07 11.5 7C11.5 8.93 9.93 10.5 8 10.5ZM8 5C7.17 5 6.5 5.67 6.5 6.5C6.5 7.33 7.17 8 8 8C8.83 8 9.5 7.33 9.5 6.5C9.5 5.67 8.83 5 8 5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1959,131 +2211,287 @@ const Invoice = () => {
         </div>
       )}
 
-      {/* View Invoice Modal */}
-      {showInvoiceModal && viewingInvoice && (
-        <div className="modal-overlay" onClick={() => setShowInvoiceModal(false)}>
-          <div className="modal-content invoice-view-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Invoice {viewingInvoice.invoiceNumber || `INV-${viewingInvoice.id}`}</h3>
-              <button className="modal-close" onClick={() => setShowInvoiceModal(false)}>×</button>
+      {/* View Invoice Modal - New Implementation */}
+      {showViewModal && (
+        <div 
+          className="invoice-view-modal-overlay" 
+          onClick={closeViewModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="invoice-modal-title"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            margin: 0
+          }}
+        >
+          <div 
+            className="invoice-view-modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              maxWidth: '850px',
+              width: '100%',
+              maxHeight: '95vh',
+              overflow: 'hidden',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: 0,
+              position: 'relative'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ 
+              padding: '20px 24px', 
+              borderBottom: '1px solid #e5e7eb', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              backgroundColor: '#f9fafb',
+              margin: 0
+            }}>
+              <h2 id="invoice-modal-title" style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#111827' }}>
+                {isLoadingView ? 'Loading...' : viewingInvoice && viewingInvoice.id ? `Invoice ${viewingInvoice.invoiceNumber || viewingInvoice.invoice_number || `INV-${viewingInvoice.id}`}` : 'Invoice Details'}
+              </h2>
+              <button 
+                onClick={closeViewModal}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '24px', 
+                  cursor: 'pointer', 
+                  padding: '4px 8px',
+                  color: '#6b7280',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s',
+                  margin: 0
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = '#111827';
+                  e.target.style.backgroundColor = '#e5e7eb';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = '#6b7280';
+                  e.target.style.backgroundColor = 'transparent';
+                }}
+              >
+                ×
+              </button>
             </div>
-            <div className="modal-body invoice-view-body">
-              <div className="invoice-view-container">
-                <div className="invoice-view-header">
-                  <div className="invoice-view-company">
-                    <h2>SriRam E-sevaiMiyam</h2>
-                    <p>[Street Address]</p>
-                    <p>[City, ST ZIP]</p>
-                    <p>Phone: [Phone Number]</p>
-                  </div>
-                  <div className="invoice-view-title-section">
-                    <h1 className="invoice-view-title">INVOICE</h1>
-                    <table className="invoice-view-meta">
-                      <tr>
-                        <td><strong>INVOICE#</strong></td>
-                        <td>{viewingInvoice.invoiceNumber || `INV-${viewingInvoice.id}`}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>DATE</strong></td>
-                        <td>
-                          {viewingInvoice.createdOn 
-                            ? new Date(viewingInvoice.createdOn).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'short', 
-                                day: 'numeric' 
-                              })
-                            : new Date().toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'short', 
-                                day: 'numeric' 
-                              })}
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
+
+            {/* Modal Body */}
+            <div style={{ 
+              padding: '24px', 
+              overflow: 'auto',
+              flex: 1,
+              backgroundColor: 'white',
+              margin: 0
+            }}>
+              {isLoadingView ? (
+                <div style={{ padding: '60px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '16px', color: '#6b7280' }}>Loading invoice details...</div>
                 </div>
-                
-                <div className="invoice-view-bill-to">
-                  <div className="invoice-view-bill-to-header">BILL TO</div>
-                  <div className="invoice-view-bill-to-content">
-                    <p><strong>{viewingInvoice.customer.name}</strong></p>
-                    {viewingInvoice.customer.address && <p>{viewingInvoice.customer.address}</p>}
-                    <p>{viewingInvoice.customer.city}, {viewingInvoice.customer.state} {viewingInvoice.customer.zipCode}</p>
-                    <p>{viewingInvoice.customer.phone}</p>
-                    {viewingInvoice.customer.email && <p>{viewingInvoice.customer.email}</p>}
-                  </div>
-                </div>
-                
-                <table className="invoice-view-items">
-                  <thead>
-                    <tr>
-                      <th>DESCRIPTION</th>
-                      <th style={{textAlign: 'right'}}>AMOUNT</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {viewingInvoice.items.map((item, index) => {
-                      const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
-                      return (
-                        <tr key={index}>
-                          <td>
-                            <div>{item.serviceName} (Qty: {item.quantity} × ₹{parseFloat(item.unitPrice).toFixed(2)})</div>
-                            {item.formData && Object.keys(item.formData).length > 0 && (
-                              <div style={{marginTop: '8px', fontSize: '12px', color: '#666', marginLeft: '20px'}}>
-                                {Object.entries(item.formData)
-                                  .filter(([key, value]) => value && value.toString().trim())
-                                  .map(([key, value]) => `${key}: ${value}`)
-                                  .join(', ')}
-                              </div>
-                            )}
-                          </td>
-                          <td style={{textAlign: 'right'}}>₹{itemTotal.toFixed(2)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                
-                <div className="invoice-view-footer">
-                  <div className="invoice-view-thanks">Thank you for your business!</div>
-                  <div className="invoice-view-total-section">
-                    <div className="invoice-view-total-label">TOTAL</div>
-                    <div className="invoice-view-total-amount">₹{parseFloat(viewingInvoice.totalAmount).toFixed(2)}</div>
-                  </div>
-                </div>
-                
-                {viewingInvoice.status === 'paid' && viewingInvoice.paymentMethod && (
-                  <div className="invoice-view-payment-info">
-                    <div className="invoice-view-payment-label">Payment Method:</div>
-                    <div className="invoice-view-payment-value">
-                      {viewingInvoice.paymentMethod}
-                      {viewingInvoice.paymentReferenceId && ` (Ref: ${viewingInvoice.paymentReferenceId})`}
+              ) : viewingInvoice && viewingInvoice.id ? (
+                <div style={{ fontFamily: 'Arial, sans-serif', color: '#111827', margin: 0 }}>
+                  {/* Invoice Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px', paddingBottom: '20px', borderBottom: '2px solid #e5e7eb' }}>
+                    <div style={{ margin: 0 }}>
+                      <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', color: '#111827', margin: '0 0 8px 0' }}>INVOICE</h1>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                        <div style={{ margin: 0 }}>
+                          <strong>Invoice #:</strong> {viewingInvoice.invoiceNumber || viewingInvoice.invoice_number || `INV-${viewingInvoice.id}`}
+                        </div>
+                        <div style={{ marginTop: '4px' }}>
+                          <strong>Date:</strong> {
+                            viewingInvoice.createdOn 
+                              ? new Date(viewingInvoice.createdOn).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                              : viewingInvoice.created_on
+                                ? new Date(viewingInvoice.created_on).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                                : 'N/A'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '4px' }}>Status</div>
+                      <span style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        backgroundColor: (viewingInvoice.status === 'paid' || viewingInvoice.status === 'Paid') ? '#d1fae5' : (viewingInvoice.status === 'pending' || viewingInvoice.status === 'Pending') ? '#fef3c7' : '#fee2e2',
+                        color: (viewingInvoice.status === 'paid' || viewingInvoice.status === 'Paid') ? '#065f46' : (viewingInvoice.status === 'pending' || viewingInvoice.status === 'Pending') ? '#92400e' : '#991b1b',
+                        display: 'inline-block'
+                      }}>
+                        {(viewingInvoice.status || 'DRAFT').toUpperCase()}
+                      </span>
                     </div>
                   </div>
-                )}
-                
-                <div className="invoice-view-contact">
-                  <p>If you have any questions about this invoice, please contact</p>
-                  <p>[Name, Phone, email@address.com]</p>
+
+                  {/* Customer Info */}
+                  {viewingInvoice.customer && (
+                    <div style={{ marginBottom: '30px', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                      <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#111827', margin: '0 0 12px 0' }}>Bill To:</h3>
+                      <div style={{ fontSize: '14px', color: '#374151', lineHeight: '1.6' }}>
+                        <div style={{ fontWeight: '600', margin: 0 }}>{viewingInvoice.customer.name || 'N/A'}</div>
+                        {viewingInvoice.customer.company && <div style={{ margin: 0 }}>{viewingInvoice.customer.company}</div>}
+                        {viewingInvoice.customer.address && <div style={{ margin: 0 }}>{viewingInvoice.customer.address}</div>}
+                        <div style={{ margin: 0 }}>
+                          {[viewingInvoice.customer.city, viewingInvoice.customer.state, viewingInvoice.customer.zipCode]
+                            .filter(Boolean).join(', ')}
+                        </div>
+                        {viewingInvoice.customer.phone && <div style={{ margin: 0 }}>Phone: {viewingInvoice.customer.phone}</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Items Table */}
+                  {viewingInvoice.items && viewingInvoice.items.length > 0 && (
+                    <div style={{ marginBottom: '30px' }}>
+                      <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#111827', margin: '0 0 12px 0' }}>Items</h3>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e5e7eb', margin: 0 }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#f9fafb' }}>
+                            <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #e5e7eb', fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>Description</th>
+                            <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #e5e7eb', fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>Qty</th>
+                            <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #e5e7eb', fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>Unit Price</th>
+                            <th style={{ padding: '12px', textAlign: 'right', borderBottom: '2px solid #e5e7eb', fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewingInvoice.items.map((item, index) => {
+                            const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
+                            let description = item.serviceName || 'N/A';
+                            if (item.formData && Object.keys(item.formData).length > 0) {
+                              const formInfo = Object.entries(item.formData)
+                                .filter(([key, value]) => value && value.toString().trim())
+                                .map(([key, value]) => `${key}: ${value}`)
+                                .join(', ');
+                              if (formInfo) {
+                                description += ` (${formInfo})`;
+                              }
+                            }
+                            return (
+                              <tr key={index} style={{ borderBottom: '1px solid #e5e7eb' }}>
+                                <td style={{ padding: '12px', fontSize: '14px', color: '#374151', margin: 0 }}>{description}</td>
+                                <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px', color: '#374151', margin: 0 }}>{item.quantity || '0'}</td>
+                                <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', color: '#374151', margin: 0 }}>₹{parseFloat(item.unitPrice || 0).toFixed(2)}</td>
+                                <td style={{ padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: '500', color: '#111827', margin: 0 }}>₹{itemTotal.toFixed(2)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '2px solid #e5e7eb' }}>
+                    <div style={{ maxWidth: '300px', marginLeft: 'auto' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '14px', color: '#6b7280' }}>
+                        <span style={{ margin: 0 }}>Subtotal:</span>
+                        <span style={{ fontWeight: '500', color: '#111827', margin: 0 }}>
+                          ₹{viewingInvoice.items ? viewingInvoice.items.reduce((sum, item) => sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0)), 0).toFixed(2) : '0.00'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '14px', color: '#6b7280' }}>
+                        <span style={{ margin: 0 }}>Tax:</span>
+                        <span style={{ fontWeight: '500', color: '#111827', margin: 0 }}>₹0.00</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', marginTop: '8px', borderTop: '2px solid #111827', fontSize: '18px', fontWeight: 'bold', color: '#111827' }}>
+                        <span style={{ margin: 0 }}>Total:</span>
+                        <span style={{ margin: 0 }}>₹{parseFloat(viewingInvoice.totalAmount || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Info */}
+                  {viewingInvoice.status === 'paid' && viewingInvoice.paymentMethod && (
+                    <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#d1fae5', borderRadius: '8px', fontSize: '14px' }}>
+                      <strong>Payment Method:</strong> {viewingInvoice.paymentMethod}
+                      {viewingInvoice.paymentReferenceId && (
+                        <div style={{ marginTop: '4px' }}>
+                          <strong>Reference ID:</strong> {viewingInvoice.paymentReferenceId}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div style={{ padding: '60px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '16px', color: '#6b7280', marginBottom: '10px' }}>No invoice data available</div>
+                  {viewingInvoice && (
+                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                      Debug: viewingInvoice exists but missing id. Data: {JSON.stringify(Object.keys(viewingInvoice || {}))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="modal-footer">
+
+            {/* Modal Footer */}
+            <div style={{ 
+              padding: '20px 24px', 
+              borderTop: '1px solid #e5e7eb', 
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              gap: '12px',
+              backgroundColor: '#f9fafb',
+              margin: 0
+            }}>
               <button
-                className="btn-secondary"
-                onClick={() => setShowInvoiceModal(false)}
+                onClick={closeViewModal}
+                style={{ 
+                  padding: '10px 20px', 
+                  borderRadius: '6px', 
+                  border: '1px solid #d1d5db', 
+                  background: 'white', 
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  transition: 'all 0.2s',
+                  margin: 0
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
               >
                 Close
               </button>
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setShowInvoiceModal(false);
-                  handleDownloadInvoice(viewingInvoice.id);
-                }}
-              >
-                Download PDF
-              </button>
+              {viewingInvoice && (
+                <button
+                  onClick={() => {
+                    handleDownloadInvoice(viewingInvoice.id);
+                  }}
+                  style={{ 
+                    padding: '10px 20px', 
+                    borderRadius: '6px', 
+                    border: 'none', 
+                    background: '#4A90E2', 
+                    color: 'white', 
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                    margin: 0
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#357ABD'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#4A90E2'}
+                >
+                  Download PDF
+                </button>
+              )}
             </div>
           </div>
         </div>

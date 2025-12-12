@@ -6,6 +6,7 @@ import AddCustomers from './pages/AddCustomers';
 import CustomerDetails from './pages/CustomerDetails';
 import CustomerServices from './pages/CustomerServices';
 import Sales from './pages/Sales';
+import ViewData from './pages/ViewData';
 import Settings from './pages/Settings';
 import SetPassword from './pages/SetPassword';
 import ForgotPassword from './pages/ForgotPassword';
@@ -87,6 +88,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Sales />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/view-data"
+          element={
+            <ProtectedRoute>
+              <ViewData />
             </ProtectedRoute>
           }
         />

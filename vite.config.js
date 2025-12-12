@@ -8,10 +8,16 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://172.20.10.12:5001/',
         changeOrigin: true,
       },
     },
+  },
+  optimizeDeps: {
+    include: ['@mui/x-date-pickers', '@mui/material', 'dayjs'],
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom'],
   },
 })
 

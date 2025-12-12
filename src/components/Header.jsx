@@ -138,7 +138,7 @@ const Header = ({ onMenuClick }) => {
               <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="#4A90E2"/>
             </svg>
           </div>
-          <span className="text-lg font-semibold text-gray-800">SriRam E-sevaiMiyam</span>
+          <span className="text-lg font-semibold text-gray-800">SriRam E-SevaiMaiyam</span>
         </div>
       </div>
       

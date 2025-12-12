@@ -47,6 +47,8 @@ const Sales = () => {
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [leadComments, setLeadComments] = useState('');
   const [isCreatingLead, setIsCreatingLead] = useState(false);
+  const [isCustomerLead, setIsCustomerLead] = useState(false);
+  const [showLeadConfirmDialog, setShowLeadConfirmDialog] = useState(false);
   
   // Service dropdown state
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
@@ -385,6 +387,39 @@ const Sales = () => {
     setSelectedCustomer(customer);
     setCustomerSearch(`${customer.name} - ${customer.phone}`);
     setCustomerResults([]);
+    // Check if customer is already a lead
+    checkCustomerLeadStatus(customer.id);
+  };
+
+  const checkCustomerLeadStatus = async (customerId) => {
+    if (!customerId) {
+      setIsCustomerLead(false);
+      return;
+    }
+
+    try {
+      const token = getAuthToken();
+      const response = await fetch(API_ENDPOINTS.LEADS.CHECK(customerId), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setIsCustomerLead(data.data.isLead || false);
+        } else {
+          setIsCustomerLead(false);
+        }
+      } else {
+        setIsCustomerLead(false);
+      }
+    } catch (error) {
+      console.error('Error checking lead status:', error);
+      setIsCustomerLead(false);
+    }
   };
 
   const handleAddService = (service) => {
@@ -1013,6 +1048,26 @@ const Sales = () => {
     }, 0);
   };
 
+  const handleMarkAsLeadClick = () => {
+    if (!selectedCustomer) {
+      alert('Please select a customer first');
+      return;
+    }
+
+    // If customer is already a lead, show confirmation dialog
+    if (isCustomerLead) {
+      setShowLeadConfirmDialog(true);
+    } else {
+      // If not a lead, open the lead modal directly
+      setShowLeadModal(true);
+    }
+  };
+
+  const handleConfirmAddLeadAgain = () => {
+    setShowLeadConfirmDialog(false);
+    setShowLeadModal(true);
+  };
+
   const handleMarkAsLead = async () => {
     if (!selectedCustomer) {
       alert('Please select a customer first');
@@ -1040,7 +1095,10 @@ const Sales = () => {
         if (data.success) {
           alert('Customer marked as lead successfully!');
           setShowLeadModal(false);
+          setShowLeadConfirmDialog(false);
           setLeadComments('');
+          // Update lead status
+          setIsCustomerLead(true);
         } else {
           alert(data.message || 'Failed to mark as lead');
         }
@@ -1267,6 +1325,7 @@ const Sales = () => {
           setViewMode('list');
           setFormErrors({}); // Clear form errors
           setServiceErrors({}); // Clear service errors
+          setIsCustomerLead(false); // Reset lead status
           fetchInvoices(1);
         } else {
           alert(data.message || `Failed to ${editingInvoiceId ? 'update' : 'create'} sale`);
@@ -1307,12 +1366,15 @@ const Sales = () => {
           const invoice = data.data.invoice;
           
           // Set customer
-          setSelectedCustomer({
+          const customer = {
             id: invoice.customerId,
             name: invoice.customer.name,
             phone: invoice.customer.phone
-          });
+          };
+          setSelectedCustomer(customer);
           setCustomerSearch(`${invoice.customer.name} - ${invoice.customer.phone}`);
+          // Check if customer is already a lead
+          checkCustomerLeadStatus(customer.id);
           
           // Set invoice items - wait a bit for availableServices to be populated
           setTimeout(() => {
@@ -1361,8 +1423,25 @@ const Sales = () => {
   };
 
   const handleViewInvoice = async (invoiceId) => {
+    if (!invoiceId) {
+      alert('Invalid invoice ID');
+      return;
+    }
+    
     try {
+      // Show modal immediately
+      setShowInvoiceModal(true);
+      setViewingInvoice(null);
+      document.body.style.overflow = 'hidden';
+      
       const token = getAuthToken();
+      if (!token) {
+        alert('Please login to view invoices');
+        setShowInvoiceModal(false);
+        document.body.style.overflow = '';
+        return;
+      }
+
       const response = await fetch(API_ENDPOINTS.SALES.BY_ID(invoiceId), {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1372,19 +1451,40 @@ const Sales = () => {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data && data.data.invoice) {
-          setViewingInvoice(data.data.invoice);
-          setShowInvoiceModal(true);
+        const invoice = data.data?.invoice;
+        
+        if (invoice && invoice.id) {
+          // Ensure items is an array
+          if (!invoice.items || !Array.isArray(invoice.items)) {
+            invoice.items = [];
+          }
+          // Ensure customer exists
+          if (!invoice.customer) {
+            invoice.customer = {};
+          }
+          setViewingInvoice(invoice);
         } else {
-          alert('Failed to load sale details');
+          alert('Failed to load invoice: Invoice data not found or invalid.');
+          setShowInvoiceModal(false);
+          document.body.style.overflow = '';
         }
       } else {
-        alert('Failed to load invoice details');
+        const errorData = await response.json().catch(() => ({}));
+        alert('Failed to load invoice: ' + (errorData.message || 'Server error'));
+        setShowInvoiceModal(false);
+        document.body.style.overflow = '';
       }
     } catch (error) {
-      console.error('Error loading invoice:', error);
-      alert('Failed to load invoice details');
+      alert('Failed to load invoice: ' + (error.message || 'Network error'));
+      setShowInvoiceModal(false);
+      document.body.style.overflow = '';
     }
+  };
+
+  const closeViewModal = () => {
+    setShowInvoiceModal(false);
+    setViewingInvoice(null);
+    document.body.style.overflow = '';
   };
 
   const handleDownloadInvoice = async (invoiceId) => {
@@ -1548,38 +1648,46 @@ const Sales = () => {
     const invoiceDate = invoice.createdOn 
       ? new Date(invoice.createdOn).toLocaleDateString('en-US', { 
           year: 'numeric', 
-          month: 'short', 
+          month: 'long', 
           day: 'numeric' 
         })
       : new Date().toLocaleDateString('en-US', { 
           year: 'numeric', 
-          month: 'short', 
+          month: 'long', 
           day: 'numeric' 
         });
+
+    // Calculate subtotal
+    const subtotal = invoice.items.reduce((sum, item) => {
+      return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0));
+    }, 0);
+    
+    // Calculate tax (assuming 0% for now, can be added later)
+    const salesTax = 0;
+    const pnp = 0; // Postage & Packaging
+    const totalDue = parseFloat(invoice.totalAmount) || subtotal;
 
     let itemsHTML = '';
     invoice.items.forEach((item, index) => {
       const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
-      let description = `${item.serviceName} (Qty: ${item.quantity} × ₹${parseFloat(item.unitPrice).toFixed(2)})`;
-      
-      // Add form data as additional information
-      if (item.formData && Object.keys(item.formData).length > 0) {
-        const formInfo = Object.entries(item.formData)
-          .filter(([key, value]) => value && value.toString().trim())
-          .map(([key, value]) => `${key}: ${value}`)
-          .join(', ');
-        if (formInfo) {
-          description += `<br><small style="color: #666; margin-left: 20px;">${formInfo}</small>`;
-        }
-      }
+      const description = item.serviceName;
       
       itemsHTML += `
         <tr>
+          <td>${item.quantity || ''}</td>
           <td>${description}</td>
+          <td style="text-align: right;">₹${parseFloat(item.unitPrice || 0).toFixed(2)}</td>
           <td style="text-align: right;">₹${itemTotal.toFixed(2)}</td>
         </tr>
       `;
     });
+
+    // Get customer address parts
+    const customerAddress = invoice.customer?.address || '';
+    const customerCity = invoice.customer?.city || '';
+    const customerState = invoice.customer?.state || '';
+    const customerZip = invoice.customer?.zipCode || '';
+    const customerLocation = `${customerCity}${customerCity && customerState ? ', ' : ''}${customerState} ${customerZip}`.trim();
 
     return `
       <div class="invoice-container">
@@ -1587,39 +1695,78 @@ const Sales = () => {
           <div class="invoice-company">
             <h1>SriRam E-sevaiMiyam</h1>
             <p>[Street Address]</p>
-            <p>[City, ST ZIP]</p>
-            <p>Phone: [Phone Number]</p>
+            <p>[Town, County Postal Code]</p>
+            <p>Phone [01234 567890] Fax [01234 567890]</p>
           </div>
           <div class="invoice-title-section">
-            <h1 class="invoice-title">SALE</h1>
-            <table class="invoice-meta">
-              <tr>
-                <td><strong>SALE#</strong></td>
-                <td>${invoice.invoiceNumber || `INV-${invoice.id}`}</td>
-              </tr>
-              <tr>
-                <td><strong>DATE</strong></td>
-                <td>${invoiceDate}</td>
-              </tr>
-            </table>
+            <h1 class="invoice-title">INVOICE</h1>
+            <div class="invoice-meta">
+              <div class="invoice-meta-row">
+                <span class="invoice-meta-label">INVOICE No</span>
+                <span class="invoice-meta-value">${invoice.invoiceNumber || `INV-${invoice.id}`}</span>
+              </div>
+              <div class="invoice-meta-row">
+                <span class="invoice-meta-label">DATE:</span>
+                <span class="invoice-meta-value">${invoiceDate}</span>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div class="invoice-bill-to">
-          <div class="bill-to-header">BILL TO</div>
-          <div class="bill-to-content">
-            <p><strong>${invoice.customer?.name || 'N/A'}</strong></p>
-            ${invoice.customer?.address ? `<p>${invoice.customer.address}</p>` : ''}
-            <p>${invoice.customer?.city || ''}${invoice.customer?.city && invoice.customer?.state ? ', ' : ''}${invoice.customer?.state || ''} ${invoice.customer?.zipCode || ''}</p>
-            <p>${invoice.customer?.phone || 'N/A'}</p>
-            ${invoice.customer?.email ? `<p>${invoice.customer.email}</p>` : ''}
+        <div class="invoice-addresses">
+          <div class="invoice-address-section">
+            <div class="address-label">Billing Address:</div>
+            <div class="address-content">
+              <p>${invoice.customer?.name || 'Name'}</p>
+              <p>${invoice.customer?.company || 'Company'}</p>
+              <p>${customerAddress || 'Address'}</p>
+              <p>${customerLocation || 'Town, County Postal Code'}</p>
+              <p>${invoice.customer?.phone || 'Phone'}</p>
+            </div>
+          </div>
+          <div class="invoice-address-section">
+            <div class="address-label">Delivery Address:</div>
+            <div class="address-content">
+              <p>${invoice.customer?.name || 'Name'}</p>
+              <p>${invoice.customer?.company || 'Company'}</p>
+              <p>${customerAddress || 'Address'}</p>
+              <p>${customerLocation || 'Town, County Postal Code'}</p>
+              <p>${invoice.customer?.phone || 'Phone'}</p>
+            </div>
           </div>
         </div>
+        
+        <div class="invoice-instructions">
+          <p>Comments or special instructions:</p>
+        </div>
+        
+        <table class="invoice-info-table">
+          <tbody>
+            <tr>
+              <td class="info-label">SALESPERSON</td>
+              <td class="info-label">P.O. NUMBER</td>
+              <td class="info-label">SENT DATE</td>
+              <td class="info-label">SENT VIA</td>
+              <td class="info-label">F.O.B. POINT</td>
+              <td class="info-label">TERMS</td>
+            </tr>
+            <tr>
+              <td class="info-value"></td>
+              <td class="info-value"></td>
+              <td class="info-value"></td>
+              <td class="info-value"></td>
+              <td class="info-value"></td>
+              <td class="info-value">Due on receipt</td>
+            </tr>
+          </tbody>
+        </table>
         
         <table class="invoice-items">
           <thead>
             <tr>
+              <th>QUANTITY</th>
               <th>DESCRIPTION</th>
+              <th style="text-align: right;">UNIT PRICE</th>
               <th style="text-align: right;">AMOUNT</th>
             </tr>
           </thead>
@@ -1628,24 +1775,29 @@ const Sales = () => {
           </tbody>
         </table>
         
-        <div class="invoice-footer">
-          <div class="invoice-thanks">Thank you for your business!</div>
-          <div class="invoice-total-section">
-            <div class="invoice-total-label">TOTAL</div>
-            <div class="invoice-total-amount">₹${parseFloat(invoice.totalAmount).toFixed(2)}</div>
+        <div class="invoice-summary">
+          <div class="summary-row">
+            <div class="summary-label">SUBTOTAL</div>
+            <div class="summary-value">₹${subtotal.toFixed(2)}</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">SALES TAX</div>
+            <div class="summary-value">₹${salesTax.toFixed(2)}</div>
+        </div>
+          <div class="summary-row">
+            <div class="summary-label">P&P</div>
+            <div class="summary-value">₹${pnp.toFixed(2)}</div>
+        </div>
+          <div class="summary-row total-row">
+            <div class="summary-label">TOTAL DUE</div>
+            <div class="summary-value">₹${totalDue.toFixed(2)}</div>
           </div>
         </div>
         
-        ${invoice.status === 'paid' && invoice.paymentMethod ? `
-        <div class="invoice-payment-info">
-          <div class="invoice-payment-label">Payment Method:</div>
-          <div class="invoice-payment-value">${invoice.paymentMethod}${invoice.paymentReferenceId ? ` (Ref: ${invoice.paymentReferenceId})` : ''}</div>
-        </div>
-        ` : ''}
-        
-        <div class="invoice-contact">
-          <p>If you have any questions about this invoice, please contact</p>
-          <p>[Name, Phone, email@address.com]</p>
+        <div class="invoice-footer">
+          <p>Make all cheques payable to SriRam E-sevaiMiyam</p>
+          <p>If you have any questions concerning this invoice, contact [Name, Phone Number, E-mail]</p>
+          <p class="footer-thanks">THANK YOU FOR YOUR BUSINESS!</p>
         </div>
       </div>
     `;
@@ -1660,11 +1812,12 @@ const Sales = () => {
       }
       
       body {
-        font-family: Arial, sans-serif;
+        font-family: Arial, Helvetica, sans-serif;
         font-size: 12px;
-        color: #333;
-        padding: 20px;
+        color: #000;
         background: white;
+        line-height: 1.4;
+        padding: 20px;
       }
       
       .invoice-container {
@@ -1676,170 +1829,231 @@ const Sales = () => {
       .invoice-header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
+      }
+      
+      .invoice-company {
+        flex: 1;
       }
       
       .invoice-company h1 {
-        font-size: 24px;
+        font-size: 18px;
         font-weight: bold;
-        margin-bottom: 10px;
-        color: #333;
+        margin-bottom: 4px;
+        color: #000;
+      }
+      
+      .company-slogan {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 8px;
       }
       
       .invoice-company p {
         font-size: 11px;
-        color: #666;
+        color: #000;
         margin: 2px 0;
       }
       
       .invoice-title-section {
         text-align: right;
+        flex: 1;
       }
       
       .invoice-title {
-        font-size: 48px;
+        font-size: 42px;
         font-weight: bold;
-        color: #999;
-        margin-bottom: 10px;
+        color: #000;
+        margin-bottom: 8px;
+        letter-spacing: 2px;
       }
       
       .invoice-meta {
-        border-collapse: collapse;
-        margin-top: 10px;
+        margin-top: 8px;
       }
       
-      .invoice-meta td {
-        padding: 4px 8px;
+      .invoice-meta-row {
+        margin-bottom: 4px;
         font-size: 11px;
       }
       
-      .invoice-meta td:first-child {
-        text-align: right;
-        padding-right: 15px;
+      .invoice-meta-label {
+        font-weight: normal;
+        margin-right: 8px;
       }
       
-      .invoice-bill-to {
-        margin-bottom: 30px;
+      .invoice-meta-value {
+        font-weight: normal;
       }
       
-      .bill-to-header {
-        background: #666;
-        color: white;
-        padding: 8px 12px;
+      .invoice-addresses {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        gap: 30px;
+      }
+      
+      .invoice-address-section {
+        flex: 1;
+      }
+      
+      .address-label {
         font-weight: bold;
         font-size: 11px;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
+        color: #000;
       }
       
-      .bill-to-content {
-        padding-left: 12px;
-      }
-      
-      .bill-to-content p {
+      .address-content {
         font-size: 11px;
-        margin: 3px 0;
-        color: #333;
+        color: #000;
+      }
+      
+      .address-content p {
+        margin: 2px 0;
+      }
+      
+      .invoice-instructions {
+        margin-bottom: 15px;
+        font-size: 11px;
+        color: #000;
+      }
+      
+      .invoice-info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        font-size: 10px;
+      }
+      
+      .invoice-info-table tr:first-child {
+        border-bottom: 1px solid #ddd;
+      }
+      
+      .invoice-info-table td {
+        padding: 6px 4px;
+        text-align: left;
+      }
+      
+      .info-label {
+        font-weight: bold;
+        font-size: 9px;
+        color: #000;
+      }
+      
+      .info-value {
+        font-size: 10px;
+        color: #000;
       }
       
       .invoice-items {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
+        border: 1px solid #000;
       }
       
       .invoice-items thead {
-        background: #666;
-        color: white;
+        background: #f0f0f0;
       }
       
       .invoice-items th {
-        padding: 10px 12px;
+        padding: 8px 6px;
         text-align: left;
         font-weight: bold;
-        font-size: 11px;
+        font-size: 10px;
+        border: 1px solid #000;
+        border-bottom: 2px solid #000;
       }
       
-      .invoice-items th:last-child {
+      .invoice-items th:last-child,
+      .invoice-items th:nth-child(3),
+      .invoice-items th:nth-child(4) {
         text-align: right;
       }
       
       .invoice-items td {
-        padding: 10px 12px;
-        border-bottom: 1px solid #ddd;
+        padding: 6px;
+        border: 1px solid #ddd;
         font-size: 11px;
+        border-right: 1px solid #000;
       }
       
-      .invoice-items td:last-child {
+      .invoice-items tbody tr:last-child td {
+        border-bottom: 1px solid #000;
+      }
+      
+      .invoice-items td:last-child,
+      .invoice-items td:nth-child(3),
+      .invoice-items td:nth-child(4) {
+        text-align: right;
+      }
+      
+      .invoice-summary {
+        width: 100%;
+        max-width: 300px;
+        margin-left: auto;
+        margin-bottom: 30px;
+      }
+      
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 8px;
+        font-size: 11px;
+        border-bottom: 1px solid #ddd;
+      }
+      
+      .summary-row.total-row {
+        border-top: 2px solid #000;
+        border-bottom: 2px solid #000;
+        font-weight: bold;
+        font-size: 12px;
+        padding: 8px;
+        margin-top: 4px;
+      }
+      
+      .summary-label {
+        font-weight: bold;
+        color: #000;
+      }
+      
+      .summary-value {
+        color: #000;
         text-align: right;
       }
       
       .invoice-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-top: 30px;
-        margin-bottom: 40px;
-      }
-      
-      .invoice-thanks {
-        font-size: 12px;
-        color: #333;
-      }
-      
-      .invoice-total-section {
-        text-align: right;
-      }
-      
-      .invoice-total-label {
-        background: #666;
-        color: white;
-        padding: 8px 12px;
-        font-weight: bold;
-        font-size: 11px;
-        margin-bottom: 5px;
-      }
-      
-      .invoice-total-amount {
-        font-size: 24px;
-        font-weight: bold;
-        color: #333;
-        padding: 5px 12px;
-      }
-      
-      .invoice-payment-info {
-        margin-top: 20px;
-        padding: 12px;
-        background: #f5f5f5;
-        border-radius: 4px;
-        font-size: 11px;
-      }
-      
-      .invoice-payment-label {
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 4px;
-      }
-      
-      .invoice-payment-value {
-        color: #666;
-      }
-      
-      .invoice-contact {
         text-align: center;
         margin-top: 40px;
         padding-top: 20px;
         border-top: 1px solid #ddd;
         font-size: 10px;
-        color: #666;
+        color: #000;
       }
       
-      .invoice-contact p {
-        margin: 3px 0;
+      .invoice-footer p {
+        margin: 4px 0;
+      }
+      
+      .footer-thanks {
+        font-weight: bold;
+        font-size: 11px;
+        margin-top: 10px;
+        letter-spacing: 1px;
       }
       
       @media print {
         body {
-          padding: 0;
+          padding: 10px;
+        }
+        
+        .invoice-container {
+          max-width: 100%;
+        }
+        
+        @page {
+          margin: 0.5cm;
         }
         
         .invoice-container {
@@ -1897,6 +2111,7 @@ const Sales = () => {
                     setCustomerSearch('');
                     setInvoiceItems([]);
                     setInvoiceStatus('draft');
+                    setIsCustomerLead(false); // Reset lead status
                     setPaymentMethod('');
                     setPaymentReferenceId('');
                     setEditingInvoiceId(null);
@@ -2111,6 +2326,7 @@ const Sales = () => {
                           setCustomerSearch(e.target.value);
                           if (!e.target.value) {
                             setSelectedCustomer(null);
+                            setIsCustomerLead(false); // Reset lead status
                           }
                         }}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white text-gray-800 focus:outline-none focus:border-[#4A90E2] focus:ring-4 focus:ring-[#4A90E2]/10 transition-all"
@@ -2167,17 +2383,22 @@ const Sales = () => {
                           </div>
                           <div className="flex items-center gap-2 ml-4">
                             <button
-                              className="px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-md font-medium cursor-pointer transition-all hover:bg-orange-50"
-                              onClick={() => setShowLeadModal(true)}
-                              title="Mark as Lead"
+                              className={`px-3 py-1.5 text-xs rounded-md font-medium cursor-pointer transition-all ${
+                                isCustomerLead
+                                  ? 'text-green-700 bg-green-50 border border-green-300 hover:bg-green-100'
+                                  : 'text-orange-600 border border-orange-200 hover:bg-orange-50'
+                              }`}
+                              onClick={handleMarkAsLeadClick}
+                              title={isCustomerLead ? 'Already a Lead - Click to add again' : 'Mark as Lead'}
                             >
-                              Mark as Lead
+                              {isCustomerLead ? 'Already a Lead' : 'Mark as Lead'}
                             </button>
                             <button
                               className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all text-xl font-bold leading-none"
                               onClick={() => {
                                 setSelectedCustomer(null);
                                 setCustomerSearch('');
+                                setIsCustomerLead(false); // Reset lead status
                               }}
                               title="Remove customer"
                             >
@@ -2683,6 +2904,43 @@ const Sales = () => {
         </div>
       )}
 
+      {/* Lead Confirmation Dialog */}
+      {showLeadConfirmDialog && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => !isCreatingLead && setShowLeadConfirmDialog(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Confirm Action</h2>
+              <p className="text-gray-600 mb-6">
+                This customer is already marked as a lead. Do you want to add lead again?
+              </p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  className="px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-gray-50"
+                  onClick={() => setShowLeadConfirmDialog(false)}
+                  disabled={isCreatingLead}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-5 py-2.5 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all inline-flex items-center justify-center hover:-translate-y-0.5 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                  style={{ backgroundColor: isCreatingLead ? '#9CA3AF' : '#4A90E2' }}
+                  onClick={handleConfirmAddLeadAgain}
+                  disabled={isCreatingLead}
+                >
+                  Yes, Add Again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Customer Modal */}
       {showAddCustomerModal && (
         <div className="modal-overlay" onClick={() => !isCreatingCustomer && setShowAddCustomerModal(false)}>
@@ -2901,130 +3159,275 @@ const Sales = () => {
       )}
 
       {/* View Invoice Modal */}
-      {showInvoiceModal && viewingInvoice && (
-        <div className="modal-overlay" onClick={() => setShowInvoiceModal(false)}>
-          <div className="modal-content invoice-view-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Invoice {viewingInvoice.invoiceNumber || `INV-${viewingInvoice.id}`}</h3>
-              <button className="modal-close" onClick={() => setShowInvoiceModal(false)}>×</button>
+      {showInvoiceModal && (
+        <div 
+          className="modal-overlay" 
+          onClick={closeViewModal}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            margin: 0
+          }}
+        >
+          <div 
+            className="modal-content invoice-view-modal" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              maxWidth: '850px',
+              width: '100%',
+              maxHeight: '95vh',
+              overflow: 'hidden',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: 0,
+              position: 'relative'
+            }}
+          >
+            <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9fafb', margin: 0 }}>
+              <h3 className="modal-title" style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#111827' }}>
+                {viewingInvoice ? `Invoice ${viewingInvoice.invoiceNumber || `INV-${viewingInvoice.id}`}` : 'Loading...'}
+              </h3>
+              <button 
+                className="modal-close" 
+                onClick={closeViewModal}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: '24px', 
+                  cursor: 'pointer', 
+                  padding: '4px 8px',
+                  color: '#6b7280',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s',
+                  margin: 0
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.color = '#111827';
+                  e.target.style.backgroundColor = '#e5e7eb';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.color = '#6b7280';
+                  e.target.style.backgroundColor = 'transparent';
+                }}
+              >×</button>
             </div>
-            <div className="modal-body invoice-view-body">
-              <div className="invoice-view-container">
-                <div className="invoice-view-header">
-                  <div className="invoice-view-company">
-                    <h2>SriRam E-sevaiMiyam</h2>
-                    <p>[Street Address]</p>
-                    <p>[City, ST ZIP]</p>
-                    <p>Phone: [Phone Number]</p>
+            <div className="modal-body invoice-view-body" style={{ padding: '24px', overflow: 'auto', flex: 1, backgroundColor: 'white', margin: 0 }}>
+              {!viewingInvoice ? (
+                <div style={{ padding: '60px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '16px', color: '#6b7280' }}>Loading invoice details...</div>
                   </div>
-                  <div className="invoice-view-title-section">
-                    <h1 className="invoice-view-title">INVOICE</h1>
-                    <table className="invoice-view-meta">
-                      <tr>
-                        <td><strong>INVOICE#</strong></td>
-                        <td>{viewingInvoice.invoiceNumber || `INV-${viewingInvoice.id}`}</td>
-                      </tr>
-                      <tr>
-                        <td><strong>DATE</strong></td>
-                        <td>
-                          {viewingInvoice.createdOn 
+              ) : (() => {
+                const invoiceDate = viewingInvoice.createdOn 
                             ? new Date(viewingInvoice.createdOn).toLocaleDateString('en-US', { 
                                 year: 'numeric', 
-                                month: 'short', 
+                      month: 'long', 
                                 day: 'numeric' 
                               })
                             : new Date().toLocaleDateString('en-US', { 
                                 year: 'numeric', 
-                                month: 'short', 
+                      month: 'long', 
                                 day: 'numeric' 
-                              })}
-                        </td>
-                      </tr>
-                    </table>
+                    });
+
+                const subtotal = viewingInvoice.items.reduce((sum, item) => {
+                  return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0));
+                }, 0);
+                
+                const salesTax = 0;
+                const pnp = 0;
+                const totalDue = parseFloat(viewingInvoice.totalAmount) || subtotal;
+
+                const customerAddress = viewingInvoice.customer?.address || '';
+                const customerCity = viewingInvoice.customer?.city || '';
+                const customerState = viewingInvoice.customer?.state || '';
+                const customerZip = viewingInvoice.customer?.zipCode || '';
+                const customerLocation = `${customerCity}${customerCity && customerState ? ', ' : ''}${customerState} ${customerZip}`.trim();
+
+                return (
+                  <div id="invoice-modal-content" style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '12px', color: '#000', background: 'white', lineHeight: '1.4' }}>
+                    <div className="invoice-container" style={{ maxWidth: '800px', margin: '0 auto', background: 'white' }}>
+                      <div className="invoice-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px' }}>
+                        <div className="invoice-company" style={{ flex: 1 }}>
+                          <h1 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px', color: '#000', margin: 0 }}>SriRam E-sevaiMiyam</h1>
+                          <p style={{ fontSize: '11px', color: '#000', margin: '2px 0' }}>[Street Address]</p>
+                          <p style={{ fontSize: '11px', color: '#000', margin: '2px 0' }}>[Town, County Postal Code]</p>
+                          <p style={{ fontSize: '11px', color: '#000', margin: '2px 0' }}>Phone [01234 567890] Fax [01234 567890]</p>
+                        </div>
+                        <div className="invoice-title-section" style={{ textAlign: 'right', flex: 1 }}>
+                          <h1 className="invoice-title" style={{ fontSize: '42px', fontWeight: 'bold', color: '#000', marginBottom: '8px', letterSpacing: '2px', margin: '0 0 8px 0' }}>INVOICE</h1>
+                          <div className="invoice-meta" style={{ marginTop: '8px' }}>
+                            <div className="invoice-meta-row" style={{ marginBottom: '4px', fontSize: '11px' }}>
+                              <span className="invoice-meta-label" style={{ fontWeight: 'normal', marginRight: '8px' }}>INVOICE No</span>
+                              <span className="invoice-meta-value" style={{ fontWeight: 'normal' }}>{viewingInvoice.invoiceNumber || `INV-${viewingInvoice.id}`}</span>
+                            </div>
+                            <div className="invoice-meta-row" style={{ marginBottom: '4px', fontSize: '11px' }}>
+                              <span className="invoice-meta-label" style={{ fontWeight: 'normal', marginRight: '8px' }}>DATE:</span>
+                              <span className="invoice-meta-value" style={{ fontWeight: 'normal' }}>{invoiceDate}</span>
+                            </div>
+                          </div>
                   </div>
                 </div>
                 
-                <div className="invoice-view-bill-to">
-                  <div className="invoice-view-bill-to-header">BILL TO</div>
-                  <div className="invoice-view-bill-to-content">
-                    <p><strong>{viewingInvoice.customer.name}</strong></p>
-                    {viewingInvoice.customer.address && <p>{viewingInvoice.customer.address}</p>}
-                    <p>{viewingInvoice.customer.city}, {viewingInvoice.customer.state} {viewingInvoice.customer.zipCode}</p>
-                    <p>{viewingInvoice.customer.phone}</p>
-                    {viewingInvoice.customer.email && <p>{viewingInvoice.customer.email}</p>}
+                      <div className="invoice-addresses" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', gap: '30px' }}>
+                        <div className="invoice-address-section" style={{ flex: 1 }}>
+                          <div className="address-label" style={{ fontWeight: 'bold', fontSize: '11px', marginBottom: '6px', color: '#000' }}>Billing Address:</div>
+                          <div className="address-content" style={{ fontSize: '11px', color: '#000' }}>
+                            <p style={{ margin: '2px 0' }}>{viewingInvoice.customer?.name || 'Name'}</p>
+                            <p style={{ margin: '2px 0' }}>{viewingInvoice.customer?.company || 'Company'}</p>
+                            <p style={{ margin: '2px 0' }}>{customerAddress || 'Address'}</p>
+                            <p style={{ margin: '2px 0' }}>{customerLocation || 'Town, County Postal Code'}</p>
+                            <p style={{ margin: '2px 0' }}>{viewingInvoice.customer?.phone || 'Phone'}</p>
+                          </div>
+                        </div>
+                        <div className="invoice-address-section" style={{ flex: 1 }}>
+                          <div className="address-label" style={{ fontWeight: 'bold', fontSize: '11px', marginBottom: '6px', color: '#000' }}>Delivery Address:</div>
+                          <div className="address-content" style={{ fontSize: '11px', color: '#000' }}>
+                            <p style={{ margin: '2px 0' }}>{viewingInvoice.customer?.name || 'Name'}</p>
+                            <p style={{ margin: '2px 0' }}>{viewingInvoice.customer?.company || 'Company'}</p>
+                            <p style={{ margin: '2px 0' }}>{customerAddress || 'Address'}</p>
+                            <p style={{ margin: '2px 0' }}>{customerLocation || 'Town, County Postal Code'}</p>
+                            <p style={{ margin: '2px 0' }}>{viewingInvoice.customer?.phone || 'Phone'}</p>
+                          </div>
                   </div>
                 </div>
                 
-                <table className="invoice-view-items">
-                  <thead>
-                    <tr>
-                      <th>DESCRIPTION</th>
-                      <th style={{textAlign: 'right'}}>AMOUNT</th>
+                      <div className="invoice-instructions" style={{ marginBottom: '15px', fontSize: '11px', color: '#000' }}>
+                        <p style={{ margin: 0 }}>Comments or special instructions:</p>
+                      </div>
+                      
+                      <table className="invoice-info-table" style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '10px' }}>
+                        <tbody>
+                          <tr style={{ borderBottom: '1px solid #ddd' }}>
+                            <td className="info-label" style={{ padding: '6px 4px', textAlign: 'left', fontWeight: 'bold', fontSize: '9px', color: '#000' }}>SALESPERSON</td>
+                            <td className="info-label" style={{ padding: '6px 4px', textAlign: 'left', fontWeight: 'bold', fontSize: '9px', color: '#000' }}>P.O. NUMBER</td>
+                            <td className="info-label" style={{ padding: '6px 4px', textAlign: 'left', fontWeight: 'bold', fontSize: '9px', color: '#000' }}>SENT DATE</td>
+                            <td className="info-label" style={{ padding: '6px 4px', textAlign: 'left', fontWeight: 'bold', fontSize: '9px', color: '#000' }}>SENT VIA</td>
+                            <td className="info-label" style={{ padding: '6px 4px', textAlign: 'left', fontWeight: 'bold', fontSize: '9px', color: '#000' }}>F.O.B. POINT</td>
+                            <td className="info-label" style={{ padding: '6px 4px', textAlign: 'left', fontWeight: 'bold', fontSize: '9px', color: '#000' }}>TERMS</td>
+                          </tr>
+                          <tr>
+                            <td className="info-value" style={{ padding: '6px 4px', textAlign: 'left', fontSize: '10px', color: '#000' }}></td>
+                            <td className="info-value" style={{ padding: '6px 4px', textAlign: 'left', fontSize: '10px', color: '#000' }}></td>
+                            <td className="info-value" style={{ padding: '6px 4px', textAlign: 'left', fontSize: '10px', color: '#000' }}></td>
+                            <td className="info-value" style={{ padding: '6px 4px', textAlign: 'left', fontSize: '10px', color: '#000' }}></td>
+                            <td className="info-value" style={{ padding: '6px 4px', textAlign: 'left', fontSize: '10px', color: '#000' }}></td>
+                            <td className="info-value" style={{ padding: '6px 4px', textAlign: 'left', fontSize: '10px', color: '#000' }}>Due on receipt</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      
+                      <table className="invoice-items" style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid #000' }}>
+                        <thead style={{ background: '#f0f0f0' }}>
+                          <tr>
+                            <th style={{ padding: '8px 6px', textAlign: 'left', fontWeight: 'bold', fontSize: '10px', border: '1px solid #000', borderBottom: '2px solid #000' }}>QUANTITY</th>
+                            <th style={{ padding: '8px 6px', textAlign: 'left', fontWeight: 'bold', fontSize: '10px', border: '1px solid #000', borderBottom: '2px solid #000' }}>DESCRIPTION</th>
+                            <th style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 'bold', fontSize: '10px', border: '1px solid #000', borderBottom: '2px solid #000' }}>UNIT PRICE</th>
+                            <th style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 'bold', fontSize: '10px', border: '1px solid #000', borderBottom: '2px solid #000' }}>AMOUNT</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {viewingInvoice.items.map((item, index) => {
-                      const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
-                      return (
-                        <tr key={index}>
-                          <td>
-                            <div>{item.serviceName} (Qty: {item.quantity} × ₹{parseFloat(item.unitPrice).toFixed(2)})</div>
-                            {item.formData && Object.keys(item.formData).length > 0 && (
-                              <div style={{marginTop: '8px', fontSize: '12px', color: '#666', marginLeft: '20px'}}>
-                                {Object.entries(item.formData)
-                                  .filter(([key, value]) => value && value.toString().trim())
-                                  .map(([key, value]) => `${key}: ${value}`)
-                                  .join(', ')}
-                              </div>
-                            )}
-                          </td>
-                          <td style={{textAlign: 'right'}}>₹{itemTotal.toFixed(2)}</td>
-                        </tr>
-                      );
-                    })}
+                          {viewingInvoice.items.map((item, index) => {
+                            const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
+                            const description = item.serviceName;
+                            
+                            return (
+                              <tr key={index}>
+                                <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px', borderRight: '1px solid #000' }}>{item.quantity || ''}</td>
+                                <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px', borderRight: '1px solid #000' }}>{description}</td>
+                                <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px', borderRight: '1px solid #000', textAlign: 'right' }}>₹{parseFloat(item.unitPrice || 0).toFixed(2)}</td>
+                                <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px', borderRight: '1px solid #000', textAlign: 'right' }}>₹{itemTotal.toFixed(2)}</td>
+                              </tr>
+                            );
+                          })}
                   </tbody>
                 </table>
                 
-                <div className="invoice-view-footer">
-                  <div className="invoice-view-thanks">Thank you for your business!</div>
-                  <div className="invoice-view-total-section">
-                    <div className="invoice-view-total-label">TOTAL</div>
-                    <div className="invoice-view-total-amount">₹{parseFloat(viewingInvoice.totalAmount).toFixed(2)}</div>
+                      <div className="invoice-summary" style={{ width: '100%', maxWidth: '300px', marginLeft: 'auto', marginBottom: '30px' }}>
+                        <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px', fontSize: '11px', borderBottom: '1px solid #ddd' }}>
+                          <div className="summary-label" style={{ fontWeight: 'bold', color: '#000' }}>SUBTOTAL</div>
+                          <div className="summary-value" style={{ color: '#000', textAlign: 'right' }}>₹{subtotal.toFixed(2)}</div>
                   </div>
+                        <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px', fontSize: '11px', borderBottom: '1px solid #ddd' }}>
+                          <div className="summary-label" style={{ fontWeight: 'bold', color: '#000' }}>SALES TAX</div>
+                          <div className="summary-value" style={{ color: '#000', textAlign: 'right' }}>₹{salesTax.toFixed(2)}</div>
                 </div>
-                
-                {viewingInvoice.status === 'paid' && viewingInvoice.paymentMethod && (
-                  <div className="invoice-view-payment-info">
-                    <div className="invoice-view-payment-label">Payment Method:</div>
-                    <div className="invoice-view-payment-value">
-                      {viewingInvoice.paymentMethod}
-                      {viewingInvoice.paymentReferenceId && ` (Ref: ${viewingInvoice.paymentReferenceId})`}
+                        <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px', fontSize: '11px', borderBottom: '1px solid #ddd' }}>
+                          <div className="summary-label" style={{ fontWeight: 'bold', color: '#000' }}>P&P</div>
+                          <div className="summary-value" style={{ color: '#000', textAlign: 'right' }}>₹{pnp.toFixed(2)}</div>
                     </div>
+                        <div className="summary-row total-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px', fontSize: '12px', borderTop: '2px solid #000', borderBottom: '2px solid #000', fontWeight: 'bold', marginTop: '4px' }}>
+                          <div className="summary-label" style={{ fontWeight: 'bold', color: '#000' }}>TOTAL DUE</div>
+                          <div className="summary-value" style={{ color: '#000', textAlign: 'right' }}>₹{totalDue.toFixed(2)}</div>
                   </div>
-                )}
-                
-                <div className="invoice-view-contact">
-                  <p>If you have any questions about this invoice, please contact</p>
-                  <p>[Name, Phone, email@address.com]</p>
+                      </div>
+                      
+                      <div className="invoice-footer" style={{ textAlign: 'center', marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #ddd', fontSize: '10px', color: '#000' }}>
+                        <p style={{ margin: '4px 0' }}>Make all cheques payable to SriRam E-sevaiMiyam</p>
+                        <p style={{ margin: '4px 0' }}>If you have any questions concerning this invoice, contact [Name, Phone Number, E-mail]</p>
+                        <p className="footer-thanks" style={{ fontWeight: 'bold', fontSize: '11px', marginTop: '10px', letterSpacing: '1px', margin: '10px 0 0 0' }}>THANK YOU FOR YOUR BUSINESS!</p>
                 </div>
               </div>
             </div>
-            <div className="modal-footer">
+                );
+              })()}
+            </div>
+            <div className="modal-footer" style={{ padding: '20px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '12px', backgroundColor: '#f9fafb', margin: 0 }}>
               <button
                 className="btn-secondary"
-                onClick={() => setShowInvoiceModal(false)}
+                onClick={closeViewModal}
+                style={{ 
+                  padding: '10px 20px', 
+                  borderRadius: '6px', 
+                  border: '1px solid #d1d5db', 
+                  background: 'white', 
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151',
+                  transition: 'all 0.2s',
+                  margin: 0
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
               >
                 Close
               </button>
+              {viewingInvoice && (
               <button
                 className="btn-primary"
                 onClick={() => {
-                  setShowInvoiceModal(false);
                   handleDownloadInvoice(viewingInvoice.id);
                 }}
+                  style={{ 
+                    padding: '10px 20px', 
+                    borderRadius: '6px', 
+                    border: 'none', 
+                    background: '#4A90E2', 
+                    color: 'white', 
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                    margin: 0
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#357ABD'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#4A90E2'}
               >
                 Download PDF
               </button>
+              )}
             </div>
           </div>
         </div>
